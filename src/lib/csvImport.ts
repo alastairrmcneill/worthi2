@@ -4,6 +4,7 @@ import type { NewAccount, NewEntry } from '@/types';
 import type { AccountType } from '@/constants/accountTypes';
 import { fromISODate } from './formatting';
 import { useAccountStore } from '@/stores/accountStore';
+import { track } from './analytics';
 
 export interface ImportError {
   row: number;
@@ -175,6 +176,12 @@ export async function importCsv(navigate: (path: any) => void): Promise<void> {
       entriesCreated++;
     }
   }
+
+  track('csv_imported', {
+    accounts_count: accountsCreated,
+    entries_count: entriesCreated,
+    skipped_count: errors.length,
+  });
 
   navigate(
     `/(app)/import-result?accounts=${accountsCreated}&entries=${entriesCreated}&skipped=${errors.length}&errors=${encodeURIComponent(JSON.stringify(errors))}`

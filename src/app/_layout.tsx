@@ -19,6 +19,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useTheme, useIsDark } from '@/hooks/use-theme';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useAccountStore } from '@/stores/accountStore';
+import { initAnalytics } from '@/lib/analytics';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -58,6 +59,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     initialize();
+    initAnalytics();
   }, []);
 
   useEffect(() => {

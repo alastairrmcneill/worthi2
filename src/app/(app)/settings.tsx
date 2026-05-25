@@ -20,6 +20,7 @@ import { interpolateContribution } from '@/lib/interpolate';
 import TypePill from '@/components/accounts/TypePill';
 import { importCsv } from '@/lib/csvImport';
 import { downloadCsvTemplate } from '@/lib/csvTemplate';
+import { track } from '@/lib/analytics';
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -33,6 +34,8 @@ export default function SettingsScreen() {
   const archivedAccounts = accounts.filter((a) => a.isArchived);
 
   function handleUnarchive(id: string) {
+    const acct = accounts.find((a) => a.id === id);
+    if (acct) track('account_unarchived', { account_type: acct.type });
     updateAccount(id, { isArchived: false });
   }
 
@@ -54,6 +57,7 @@ export default function SettingsScreen() {
   async function handleDownloadTemplate() {
     try {
       await downloadCsvTemplate();
+      track('csv_template_downloaded');
     } catch (e: any) {
       Alert.alert('Download Failed', e?.message ?? 'Could not generate template');
     }
@@ -85,7 +89,10 @@ export default function SettingsScreen() {
           {CURRENCIES.map((c, i) => (
             <Pressable
               key={c.code}
-              onPress={() => setCurrency(c)}
+              onPress={() => {
+              setCurrency(c);
+              track('currency_changed', { currency_code: c.code });
+            }}
               style={({ pressed }) => [
                 styles.row,
                 i < CURRENCIES.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border },

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
+import { track } from '@/lib/analytics';
 import {
   View,
   Text,
@@ -58,6 +59,11 @@ export default function AccountDetailScreen() {
 
   const addEntryRef = useRef<AddEntrySheetHandle>(null);
   const [range, setRange] = useState<RangeKey>('All');
+
+  function handleRangeChange(r: RangeKey) {
+    setRange(r);
+    if (account) track('detail_range_changed', { range: r, account_type: account.type });
+  }
   const [scrub, setScrub] = useState<ScrubInfo | null>(null);
   const [renameVisible, setRenameVisible] = useState(false);
   const [renameText, setRenameText] = useState('');
@@ -125,7 +131,11 @@ export default function AccountDetailScreen() {
   // ── Actions ───────────────────────────────────────────────────────────────────
 
   const handleArchive = () => {
-    updateAccount(account.id, { isArchived: !account.isArchived });
+    const willArchive = !account.isArchived;
+    updateAccount(account.id, { isArchived: willArchive });
+    track(willArchive ? 'account_archived' : 'account_unarchived', {
+      account_type: account.type,
+    });
     router.back();
   };
 
@@ -152,6 +162,7 @@ export default function AccountDetailScreen() {
           style: 'destructive',
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            track('account_deleted', { account_type: account.type });
             deleteAccount(account.id);
             router.back();
           },
@@ -169,6 +180,7 @@ export default function AccountDetailScreen() {
         style: 'destructive',
         onPress: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          track('entry_deleted', { account_type: account.type });
           deleteEntry(entry.id);
         },
       },
@@ -275,7 +287,7 @@ export default function AccountDetailScreen() {
 
         {/* Range picker */}
         <View style={styles.rangeRow}>
-          <RangePicker value={range} onChange={setRange} />
+          <RangePicker value={range} onChange={handleRangeChange} />
         </View>
 
         {/* Stats */}

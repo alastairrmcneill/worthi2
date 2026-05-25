@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { track } from '@/lib/analytics';
 import {
   BottomSheetModal,
   BottomSheetScrollView,
@@ -125,6 +126,9 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
       });
     }
 
+    track(isEditing ? 'entry_edited' : 'entry_added', {
+      account_type: account.type,
+    });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     sheetRef.current?.dismiss();
     resetForm();

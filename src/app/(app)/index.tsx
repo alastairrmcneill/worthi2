@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
+import { track } from '@/lib/analytics';
 import {
   View,
   Text,
@@ -46,6 +47,16 @@ export default function HomeScreen() {
   const addAccountRef = useRef<AddAccountSheetHandle>(null);
   const [range, setRange] = useState<RangeKey>('6M');
   const [filter, setFilter] = useState<Filter>('all');
+
+  function handleRangeChange(r: RangeKey) {
+    setRange(r);
+    track('home_range_changed', { range: r });
+  }
+
+  function handleFilterChange(f: Filter) {
+    setFilter(f);
+    track('home_filter_changed', { filter: f });
+  }
   const [scrub, setScrub] = useState<ScrubInfo | null>(null);
 
   const activeAccounts = useMemo(
@@ -172,7 +183,7 @@ export default function HomeScreen() {
 
         {/* Range picker */}
         <View style={styles.rangeRow}>
-          <RangePicker value={range} onChange={setRange} />
+          <RangePicker value={range} onChange={handleRangeChange} />
         </View>
 
         {/* Filter chips */}
@@ -186,7 +197,7 @@ export default function HomeScreen() {
             type="all"
             label="All"
             active={filter === 'all'}
-            onPress={() => setFilter('all')}
+            onPress={() => handleFilterChange('all')}
           />
           {TYPE_ORDER.map((type) => (
             <FilterChip
@@ -194,7 +205,7 @@ export default function HomeScreen() {
               type={type}
               label={ACCOUNT_TYPES[type].short}
               active={filter === type}
-              onPress={() => setFilter(type)}
+              onPress={() => handleFilterChange(type)}
             />
           ))}
         </ScrollView>

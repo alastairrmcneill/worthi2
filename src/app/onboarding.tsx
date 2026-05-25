@@ -17,6 +17,7 @@ import { Spacing } from '@/constants/theme';
 import AddAccountSheet, {
   type AddAccountSheetHandle,
 } from '@/components/sheets/AddAccountSheet';
+import { track } from '@/lib/analytics';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -52,13 +53,15 @@ export default function OnboardingScreen() {
   const listRef = useRef<FlatList>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  function goToHome() {
+  function goToHome(reason: 'skipped' | 'completed' = 'skipped') {
+    if (reason === 'skipped') track('onboarding_skipped');
     setHasOnboarded(true);
     router.replace('/(app)');
   }
 
   function handleAccountSaved() {
-    goToHome();
+    track('onboarding_completed');
+    goToHome('completed');
   }
 
   function nextSlide() {
@@ -125,7 +128,7 @@ export default function OnboardingScreen() {
                 </Text>
               </Pressable>
               <Pressable
-                onPress={goToHome}
+                onPress={() => goToHome('skipped')}
                 style={({ pressed }) => [styles.ghostBtn, pressed && { opacity: 0.6 }]}
               >
                 <Text style={[styles.ghostBtnText, { color: theme.fg3 }]}>
@@ -155,7 +158,7 @@ export default function OnboardingScreen() {
       {/* Skip button */}
       <View style={styles.topBar}>
         <Pressable
-          onPress={goToHome}
+          onPress={() => goToHome('skipped')}
           style={({ pressed }) => [styles.skipBtn, pressed && { opacity: 0.6 }]}
         >
           <Text style={[styles.skipText, { color: theme.fg3 }]}>Skip</Text>

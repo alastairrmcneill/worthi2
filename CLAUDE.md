@@ -6,7 +6,7 @@ Personal net worth tracking app for iOS + Android (React Native / Expo). Focus: 
 
 ## Status
 
-**Phase:** Pre-development. All planning complete. No code written yet.
+**Phase:** Feature-complete. All 9 sessions done. Analytics wired.
 
 **Design reference exists:** `design-reference/` contains:
 - `vibrant.jsx` — full UI prototype (home, detail, onboarding, settings screens)
@@ -20,15 +20,16 @@ Personal net worth tracking app for iOS + Android (React Native / Expo). Focus: 
 
 | Concern | Decision |
 |---|---|
-| Framework | Expo managed (latest SDK) |
+| Framework | Expo managed (SDK 56) |
 | Language | TypeScript strict |
 | Navigation | Expo Router |
 | State | Zustand |
 | Graph | React Native Skia (`@shopify/react-native-skia`) |
-| Bottom sheets | `@gorhom/bottom-sheet` |
+| Bottom sheets | `@gorhom/bottom-sheet` v5 |
 | Storage | `expo-sqlite` (local-first; cloud sync deferred) |
 | Font | Geist (bundled via `expo-font`) |
 | Theme | Dark (Dusk) + Light (Linen), follows system, user can override |
+| Analytics | `mixpanel-react-native` (anonymous, no PII) |
 | Tests | None for now |
 
 ### All dependencies
@@ -39,8 +40,10 @@ expo-document-picker expo-sharing expo-file-system
 @shopify/react-native-skia @gorhom/bottom-sheet
 react-native-gesture-handler react-native-reanimated
 react-native-safe-area-context react-native-screens
-zustand
+zustand mixpanel-react-native
 ```
+
+> `mixpanel-react-native` has native modules — requires EAS Build or `npx expo run:ios`, does not work in Expo Go.
 
 ---
 
@@ -68,8 +71,8 @@ Colors used consistently: type chips, account dots, graph lines, filter chips.
 - Pension: value only, no return displayed
 
 ### Shared house
-- House accounts have `is_shared` toggle + `ownership_pct` (1–99, default 50)
-- Set on creation; editable via 3-dot menu → Edit
+- House accounts have `is_shared` toggle + `ownership_pct` (1–99, default 50; non-shared stored as 100)
+- Set on creation; editable via 3-dot menu → Rename
 - Net worth uses user's equity share only
 - Account card shows `"X% owned"` badge
 - Detail graph y-axis = user's equity share (scaled)
@@ -107,14 +110,14 @@ CREATE TABLE accounts (
   purchase_price REAL,        -- house only
   original_deposit REAL,      -- house only
   is_shared INTEGER DEFAULT 0, -- house only
-  ownership_pct REAL DEFAULT 50, -- house only, 1-99
+  ownership_pct REAL DEFAULT 50, -- house only; non-shared stores 100
   created_at INTEGER NOT NULL
 );
 
 CREATE TABLE entries (
   id TEXT PRIMARY KEY,
   account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  date INTEGER NOT NULL,         -- unix ms, date precision
+  date INTEGER NOT NULL,         -- unix ms, normalised to midnight local time
   value REAL NOT NULL,           -- balance / current value / property value
   deposited REAL,                -- investment only: cumulative deposited
   mortgage_balance REAL,         -- house only
@@ -125,13 +128,13 @@ CREATE INDEX entries_account_date ON entries(account_id, date);
 
 ---
 
-## File Structure (to build)
+## File Structure
 
 ```
 src/
   app/
-    _layout.tsx               Root layout: font loading, NavigationGuard, theme
-    onboarding.tsx            3-screen onboarding (once, gated by hasOnboarded flag)
+    _layout.tsx               Root layout: fonts, BottomSheetModalProvider, NavigationGuard, analytics init
+    onboarding.tsx            3-slide onboarding (FlatList pagination, gated by hasOnboarded)
     (app)/
       _layout.tsx             Stack navigator
       index.tsx               Home screen
@@ -141,37 +144,78 @@ src/
 
   components/
     graph/
-      NetWorthGraph.tsx     Skia graph (port of design-reference/graph.jsx)
-      RangePicker.tsx       1M/3M/6M/1Y/All pill buttons
+      NetWorthGraph.tsx       Skia graph: Catmull-Rom smoothing, gradient fill, scrub, optional dashed 2nd line
+      RangePicker.tsx         1M/3M/6M/1Y/All pill buttons
     accounts/
-      AccountCard.tsx       Home list row
-      AccountDot.tsx        Coloured type dot
-      TypePill.tsx          Chip with colour + label
-      FilterChip.tsx        Home screen type filter buttons
+      AccountCard.tsx         Home list row (name, TypePill, value, shared badge)
+      AccountDot.tsx          Coloured type dot
+      TypePill.tsx            Chip with colour dot + label
+      FilterChip.tsx          Home screen type filter buttons
     sheets/
-      AddAccountSheet.tsx   3-step add account flow
-      AddEntrySheet.tsx     Add/edit entry (reused for both)
+      AddAccountSheet.tsx     3-step BottomSheetModal: type grid → name/details → first entry
+      AddEntrySheet.tsx       Add/edit entry BottomSheetModal (presentForAccount / presentForEdit)
     common/
-      Field.tsx             Label + input (port of VField)
-      IconButton.tsx        SVG icon wrapper
+      Field.tsx               Label + BottomSheetTextInput, optional currency prefix, numeric mode
+      DateSelector.tsx        ← date → chevron row (midnight-normalised unix ms)
+      IconButton.tsx          Ionicons wrapper with surface background
+
   stores/
-    accountStore.ts         Zustand: accounts + entries CRUD, wired to SQLite
-    settingsStore.ts        Zustand: currency, themeOverride
+    accountStore.ts           Zustand: accounts + entries CRUD, wired to SQLite
+    settingsStore.ts          Zustand: currency, themeOverride, hasOnboarded (persisted AsyncStorage)
+
   db/
-    client.ts               expo-sqlite setup + migrations runner
-    queries.ts              Typed query helpers
+    client.ts                 expo-sqlite setup + migrations runner
+    queries.ts                Typed CRUD helpers (snake_case ↔ camelCase mappers)
+
   lib/
-    interpolate.ts          Linear interpolation between entries
-    networth.ts             Net worth at date, filtered totals, equity calc
-    formatting.ts           Intl.NumberFormat currency helpers
-    csvImport.ts            Parse + validate CSV → typed import structures
-    csvTemplate.ts          Generate downloadable template CSV
-  theme/
-    tokens.ts               DARK_THEME + LIGHT_THEME (from design-reference/vibrant.jsx)
-    useTheme.ts             Hook returning active theme tokens
+    interpolate.ts            Linear interpolation; buildAccountSeries, buildInvestmentSeries, buildHouseSeries
+    networth.ts               currentNetWorth, filteredNetWorth, buildHomeSeries, investmentStats, houseStats
+    formatting.ts             Intl.NumberFormat helpers: formatCurrency, formatPercent, formatDate, ISO date parse
+    csvImport.ts              DocumentPicker → parse/validate CSV → write to store → navigate to import-result
+    csvTemplate.ts            Generate + share example CSV (expo-file-system/legacy + expo-sharing)
+    analytics.ts              Mixpanel wrapper: initAnalytics(), track(); is_dev super property
+
+  hooks/
+    use-theme.ts              useTheme() + useIsDark() hooks
+
   constants/
-    accountTypes.ts         ACCOUNT_TYPES config (color, label, glyph, sign)
+    accountTypes.ts           ACCOUNT_TYPES config (color, label, glyph, sign, description)
+    theme.ts                  DARK_THEME, LIGHT_THEME, HOME_GRAPH_COLOR, Spacing
+
+  types/
+    index.ts                  Account, Entry, NewAccount, NewEntry, SeriesPoint
 ```
+
+---
+
+## Analytics
+
+`src/lib/analytics.ts` wraps `mixpanel-react-native`.
+
+- `initAnalytics()` — call once in `_layout.tsx` on app boot; registers `is_dev` super property; SDK handles `$app_open` automatically
+- `track(event, properties)` — fire-and-forget, never throws
+
+**Events tracked:**
+
+| Event | Properties | Where |
+|---|---|---|
+| `account_created` | `account_type` | AddAccountSheet on save |
+| `entry_added` | `account_type` | AddEntrySheet on save |
+| `entry_edited` | `account_type` | AddEntrySheet on update |
+| `entry_deleted` | `account_type` | account/[id].tsx delete confirm |
+| `account_archived` | `account_type` | account/[id].tsx 3-dot menu |
+| `account_unarchived` | `account_type` | account/[id].tsx + settings |
+| `account_deleted` | `account_type` | account/[id].tsx delete confirm |
+| `home_filter_changed` | `filter` | index.tsx filter chips |
+| `home_range_changed` | `range` | index.tsx range picker |
+| `detail_range_changed` | `range`, `account_type` | account/[id].tsx range picker |
+| `onboarding_completed` | — | onboarding after account saved |
+| `onboarding_skipped` | — | onboarding skip / "Skip for now" |
+| `currency_changed` | `currency_code` | settings currency selector |
+| `csv_imported` | `accounts_count`, `entries_count`, `skipped_count` | csvImport.ts |
+| `csv_template_downloaded` | — | settings download button |
+
+No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonymous `distinct_id` automatically.
 
 ---
 
@@ -187,33 +231,38 @@ src/
 - Empty state: £0, flat graph, "Add your first account" CTA
 
 ### Account Detail
-- Header: back, name, 3-dot menu (Archive / Rename+Edit / Delete)
-- Large current value
-- `NetWorthGraph`: investment = 2 lines (value solid + deposited dashed); house = 2 lines (property value solid + equity dashed, scaled to user's share if shared)
-- `RangePicker`
-- Type-specific summary stats grid
+- Header: back, TypePill + name, 3-dot menu (Archive / Rename / Delete)
+- Large current value (equity for house; portfolio value for investment)
+- `NetWorthGraph`: investment = value solid + deposited dashed; house = property value solid + equity dashed
+- `RangePicker` (defaults to All)
+- Type-specific stats grid (2-col):
+  - investment: current value, total deposited, return £, return %
+  - house: property value, mortgage, full equity, your equity, equity gain, purchase price
+  - current/pension: current balance, last updated
+  - credit_card/loan: amount owed, last updated
 - "Add Entry" button → `AddEntrySheet`
-- History list (newest first): date + values + edit (pencil) + delete (trash)
-- Delete entry: confirmation alert
-- Edit entry: `AddEntrySheet` pre-filled
+- History list (newest first): date + values + pencil (edit) + trash (delete)
+- 3-dot menu: ActionSheetIOS on iOS / Alert on Android
+- Rename modal: TextInput modal, cross-platform
 
 ### Settings
 - Currency selector (GBP/USD/EUR/AUD/CAD)
-- Import from CSV: file picker + "Download template"
-- Archived accounts: list with Unarchive buttons
+- Import from CSV + Download template
+- Archived accounts: list with Restore buttons
 
-### Onboarding (3 slides)
-1. "Know your number" — headline + subtext
-2. "Every account, one place" — account types teaser
-3. "Let's get started" — primary CTA opens `AddAccountSheet`; small secondary "Import from CSV" link
+### Onboarding (3 slides, FlatList)
+1. "Know your number" — hero net worth number
+2. "Every account, one place" — type chips grid
+3. "Let's get started" — opens `AddAccountSheet`; "Skip for now" link
 
-On account saved → `hasOnboarded = true` → navigate to home.
-Skip button → home.
+After account saved → `hasOnboarded = true` → home.
+Skip → home.
 
 ### Import Result
-- "X accounts, Y entries imported"
-- "Z rows skipped" with expandable error list
-- "View your accounts →" → home
+- Success/fail icon
+- Accounts created, entries imported, rows skipped counts
+- Expandable skipped-row error list (row number + reason)
+- "View Accounts" → home
 
 ---
 
@@ -231,37 +280,58 @@ purchase_price, original_deposit, is_shared, ownership_pct
 - `value`: positive number (importer negates credit_card/loan automatically)
 - `deposited`: investment only, cumulative running total
 - `mortgage_balance`: house only
-- `purchase_price` / `original_deposit`: house only, **first row for that account only**
+- `purchase_price` / `original_deposit`: house only, first row for that account only
 - `is_shared`: `true`/`false` (house only)
 - `ownership_pct`: 1–99 (house + shared only)
 - Bad rows skipped; reported in import summary
 - Always creates new accounts (no merge with existing)
+- Uses `expo-file-system/legacy` for file reads (new File API doesn't support content URIs from DocumentPicker)
 
 ---
 
-## Graph (Skia port)
+## Graph (Skia)
 
-Port `design-reference/graph.jsx` → `src/components/graph/NetWorthGraph.tsx`:
+`src/components/graph/NetWorthGraph.tsx`:
 
-- `@shopify/react-native-skia`: `Canvas`, `Path`, `LinearGradient`
-- Catmull-Rom → cubic Bezier smoothing (same algorithm as prototype)
-- Touch via `react-native-gesture-handler` → find nearest point → `onScrub({ts, value, x, y})`
-- Release → `onScrub(null)` clears crosshair + tooltip
-- Props: `series`, `series2`, `series2Style` ('dashed'|'solid'), `color`, `fillGradient`, `onScrub`, `showAxis`, `yDomainFrom`, `showZero`
-- Series data: `{ ts: number, value: number }[]` (pre-interpolated by caller)
+- `@shopify/react-native-skia`: `Canvas`, `Path`, `LinearGradient`, `DashPathEffect`
+- Catmull-Rom → cubic Bezier smoothing
+- Area fill with gradient
+- Optional second line (`series2`, dashed or solid)
+- Touch scrub via `PanResponder` → nearest point → `onScrub({ts, value, value2, x, y})`
+- Release → `onScrub(null)` clears crosshair
+- Props: `series`, `series2`, `series2Style`, `series2Color`, `color`, `fillGradient`, `onScrub`, `showAxis`, `showCrosshair`, `yDomainFrom`, `showZero`
+
+---
+
+## Bottom Sheets
+
+`@gorhom/bottom-sheet` v5. `BottomSheetModalProvider` wraps the app in `_layout.tsx`.
+
+Both sheets use `forwardRef` + `useImperativeHandle` to expose `present`/`dismiss`:
+
+```ts
+// AddAccountSheet
+addAccountRef.current?.present()
+
+// AddEntrySheet
+addEntryRef.current?.presentForAccount(accountId)
+addEntryRef.current?.presentForEdit(accountId, entry)
+```
+
+Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct keyboard handling.
 
 ---
 
 ## Add Account Sheet (3 steps)
 
-1. **Type picker**: 2-col grid, colour-coded cards with glyph + description
+1. **Type picker**: 2-col grid, coloured cards with glyph + description
 2. **Account details**:
    - Name field
-   - House only: purchase price, original deposit, "Shared asset" toggle → if on: ownership % field (default 50)
+   - House only: purchase price (optional), original deposit (optional), "Shared asset" toggle → ownership % field (1–99, default 50)
 3. **First entry**:
-   - Date picker (today default)
-   - house: current property value + current mortgage balance
+   - `DateSelector` (today default, ← → chevrons)
    - investment: deposited running total + current value
+   - house: property value + mortgage balance (optional)
    - credit_card / loan: amount owed (shown positive; stored negative)
    - current / pension: current balance
 
@@ -270,162 +340,15 @@ Port `design-reference/graph.jsx` → `src/components/graph/NetWorthGraph.tsx`:
 ## Sessions
 
 ### Session 1 — Scaffold + Foundation ✅ COMPLETE
-**Goal:** App boots, correct visual shell in place.
-
-- `npx create-expo-app@latest Worthi --template blank-typescript`
-- Install all dependencies (see full list above)
-- Configure Expo Router (`app/_layout.tsx`, placeholder screens)
-- `src/theme/tokens.ts` — DARK_THEME + LIGHT_THEME from vibrant.jsx
-- `src/theme/useTheme.ts` — hook using `useColorScheme()` + Zustand override
-- `src/constants/accountTypes.ts` — ACCOUNT_TYPES config
-- Load Geist font via `expo-font` in root layout
-- `src/stores/settingsStore.ts` — currency + themeOverride (Zustand + AsyncStorage)
-
-**Done when:** App runs on simulator, dark/light theme switches with system, Geist font renders, all placeholder routes load without error.
-
----
-
 ### Session 2 — Data Layer ✅ COMPLETE
-**Goal:** All data plumbing in place; no UI yet.
-
-- `src/db/client.ts` — expo-sqlite setup, migrations runner
-- `src/db/queries.ts` — typed CRUD helpers for accounts + entries
-- `src/stores/accountStore.ts` — Zustand store wired to SQLite (load on init, all CRUD actions)
-- `src/lib/interpolate.ts` — linear interpolation between entries
-- `src/lib/networth.ts` — net worth at date T, filtered totals, equity calc (incl. shared house)
-- `src/lib/formatting.ts` — `Intl.NumberFormat` currency helpers
-
-**Done when:** Can create/read/update/delete accounts + entries via store; `networth.ts` produces correct values for all account types (verify with inline test calls or console logs).
-
----
-
 ### Session 3 — Graph Component ✅ COMPLETE
-**Goal:** Reusable Skia graph ready to drop into any screen.
-
-- `src/components/graph/NetWorthGraph.tsx` — port of `design-reference/graph.jsx` to React Native Skia
-  - Catmull-Rom → cubic Bezier path smoothing
-  - Area fill with gradient
-  - Optional second line (dashed)
-  - Touch scrub via gesture handler → `onScrub` callback
-  - Crosshair + circle at scrub point; clears on release
-- `src/components/graph/RangePicker.tsx` — 1M/3M/6M/1Y/All pill buttons
-
-**Done when:** Graph renders with mock series data, scrub gesture fires correct `{ts, value}`, second line renders dashed, range picker selects ranges.
-
----
-
 ### Session 4 — Home Screen ✅ COMPLETE
-**Goal:** Primary screen fully functional with real data.
-
-- `app/(app)/index.tsx` — home screen
-- `src/components/accounts/AccountCard.tsx` — list row (name, type pill, value, shared badge if applicable)
-- `src/components/accounts/AccountDot.tsx`
-- `src/components/accounts/TypePill.tsx`
-- `src/components/accounts/FilterChip.tsx`
-- Net worth header: scrub updates number; filter chip updates number
-- Graph wired to real interpolated data from store
-- All 6 filter chips always visible; "All" default
-- Account list sorted by |value| desc
-- FAB → placeholder (sheet wired in Session 6)
-- Empty state: £0, flat graph, "Add your first account" prompt
-
-**Done when:** Home screen shows real data from SQLite, scrub works, filter chips switch graph + list + header, empty state shows when no accounts.
-
----
-
-### Session 5 — Account Detail Screen
-**Goal:** Full per-account drill-down with history management.
-
-- `app/(app)/account/[id].tsx`
-- Type-specific summary stats grid (all 6 types; house shows shared % if applicable)
-- Graph in detail: investment = value + deposited dashed; house = property value + equity dashed
-- History list (newest first): date + values + pencil/trash icons
-- Delete entry: confirmation alert → removes from DB
-- Edit entry: opens `AddEntrySheet` pre-filled (sheet wired in Session 6 — use placeholder for now)
-- 3-dot menu: Archive / Rename+Edit / Delete account
-  - Archive: set `is_archived`, navigate back
-  - Rename: inline prompt or simple modal
-  - Delete: confirmation → cascade delete entries → navigate back
-
-**Done when:** All account types render correct stats; history entries show, can be deleted; archive + delete account work; graph correct per type.
-
----
-
-### Session 6 — Add / Edit Flows
-**Goal:** Users can create accounts and log entries.
-
-- `src/components/sheets/AddAccountSheet.tsx` — 3-step flow
-  - Step 1: type picker grid
-  - Step 2: name field; house adds purchase price, original deposit, shared toggle + ownership %
-  - Step 3: first entry (type-specific fields; credit_card/loan: negate on save)
-- `src/components/sheets/AddEntrySheet.tsx` — add + edit entry (reused)
-  - Date picker (today default)
-  - Type-specific fields
-  - Pre-fills when editing
-- `src/components/common/Field.tsx` — VField port (label + input, optional prefix, numeric)
-- `src/components/common/IconButton.tsx`
-- Wire FAB on home → `AddAccountSheet`
-- Wire "Add Entry" button + edit pencil on detail → `AddEntrySheet`
-
-**Done when:** Full add account flow works for all 6 types (including shared house); add/edit entry works; new data appears immediately in home + detail.
-
----
-
-### Session 7 — Onboarding + Settings
-**Goal:** First-launch experience and settings screen.
-
-- `app/onboarding.tsx` — 3 slides
-  - Slide 1: "Know your number"
-  - Slide 2: "Every account, one place"
-  - Slide 3: "Let's get started" — primary CTA opens `AddAccountSheet`; small secondary "Import from CSV" link
-  - Skip → home
-  - After account saved → set `hasOnboarded` flag → home
-- `app/(app)/settings.tsx`
-  - Currency selector (GBP/USD/EUR/AUD/CAD) → updates `settingsStore`
-  - Archived accounts list with Unarchive buttons
-  - Import from CSV button (wired in Session 8)
-  - Download CSV template button (wired in Session 8)
-- Root layout: check `hasOnboarded` flag → route to onboarding or home
-
-**Done when:** Fresh install shows onboarding; skip/complete both route to home correctly; currency change relabels all values; unarchive restores account to home list.
-
----
-
-### Session 8 — CSV Import
-**Goal:** Users can import data from a CSV file.
-
-- `src/lib/csvImport.ts` — parse + validate CSV
-  - Validate row by row; skip bad rows, collect error reasons
-  - Group by `account_name` → build Account + Entry structures
-  - First row per account: read static fields
-  - Auto-negate credit_card/loan values
-- `src/lib/csvTemplate.ts` — generate example CSV with all columns + one row per account type
-- `app/(app)/import-result.tsx` — summary screen
-  - "X accounts, Y entries imported"
-  - "Z rows skipped" with expandable error list
-  - "View accounts →" → home
-- Wire "Import from CSV" in settings + onboarding slide 3 → `expo-document-picker` → parse → write to DB → navigate to import-result
-- Wire "Download template" → generate CSV → `expo-sharing`
-
-**Done when:** Can import a well-formed CSV (all 6 types including shared house); summary shows correct counts; bad rows skipped and listed; template downloads and opens correctly.
-
----
-
-### Session 9 — Polish
-**Goal:** App feels native and production-ready.
-
-- Haptic feedback on FAB, save, delete
-- Sheet open/close animations (if not already from `@gorhom/bottom-sheet`)
-- Loading states (DB init)
-- Graceful handling of 0 entries (graph flat line at £0)
-- Edge cases: account with 1 entry only; entry on today vs past
-- Negative equity house (mortgage > value)
-- Credit card / loan display always positive label with red colour
-- Verify all interpolation edge cases
-- App icon + splash screen slots (leave assets for user to drop in)
-- Final pass on dark + light theme consistency
-
-**Done when:** All verification checklist items pass.
+### Session 5 — Account Detail Screen ✅ COMPLETE
+### Session 6 — Add / Edit Flows ✅ COMPLETE
+### Session 7 — Onboarding + Settings ✅ COMPLETE
+### Session 8 — CSV Import ✅ COMPLETE
+### Session 9 — Polish ✅ COMPLETE
+### Analytics — Mixpanel ✅ COMPLETE
 
 ---
 
@@ -433,13 +356,15 @@ Port `design-reference/graph.jsx` → `src/components/graph/NetWorthGraph.tsx`:
 
 - [ ] Add investment + shared house (60%) + credit card; net worth = investment + (equity × 0.6) − CC
 - [ ] Log entries at irregular dates; graph interpolates smoothly
-- [ ] Scrub graph; header updates; tooltip + crosshair clear on release
+- [ ] Scrub graph; header updates; crosshair clears on release
 - [ ] Archive account; hidden from list; historical graph data unchanged
 - [ ] Toggle currency; symbol changes, numbers unchanged
 - [ ] Kill + reopen app; all data persists
-- [ ] System dark/light toggle; theme follows; settings override works
+- [ ] System dark/light toggle; theme follows
 - [ ] Import test CSV; summary shows correct counts + skipped rows
 - [ ] Download CSV template; correct columns + example data
+- [ ] Add account via onboarding; hasOnboarded set; lands on home
+- [ ] Mixpanel events appear in dashboard (check is_dev = true in dev build)
 
 ---
 
@@ -448,3 +373,4 @@ Port `design-reference/graph.jsx` → `src/components/graph/NetWorthGraph.tsx`:
 - Cloud sync (Supabase)
 - Screenshot OCR import (vision model extracts values from old app screenshots)
 - Manual account reordering
+- Theme override in settings UI

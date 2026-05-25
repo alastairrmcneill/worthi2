@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { View, Text, Pressable, StyleSheet, Switch } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { track } from '@/lib/analytics';
 import {
   BottomSheetModal,
   BottomSheetScrollView,
@@ -115,6 +116,7 @@ const AddAccountSheet = forwardRef<AddAccountSheetHandle, Props>(
           form.type === 'house' ? (parseFloat(form.mortgageBalance) || 0) : null,
       });
 
+      track('account_created', { account_type: form.type! });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       sheetRef.current?.dismiss();
       onAccountSaved?.(account.id);
