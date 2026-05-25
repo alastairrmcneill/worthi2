@@ -195,6 +195,11 @@ src/
 - `initAnalytics()` — call once in `_layout.tsx` on app boot; registers `is_dev` super property; SDK handles `$app_open` automatically
 - `track(event, properties)` — fire-and-forget, never throws
 
+**Token config:**
+- Token read from `process.env.EXPO_PUBLIC_MIXPANEL_TOKEN`
+- Local dev: set in `.env` (gitignored; see `.env.example`)
+- EAS Build: add as project secret — `eas secret:create --scope project --name EXPO_PUBLIC_MIXPANEL_TOKEN --value <token>`
+
 **Events tracked:**
 
 | Event | Properties | Where |
