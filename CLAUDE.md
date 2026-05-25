@@ -299,7 +299,7 @@ Port `design-reference/graph.jsx` → `src/components/graph/NetWorthGraph.tsx`:
 
 ---
 
-### Session 3 — Graph Component
+### Session 3 — Graph Component ✅ COMPLETE
 **Goal:** Reusable Skia graph ready to drop into any screen.
 
 - `src/components/graph/NetWorthGraph.tsx` — port of `design-reference/graph.jsx` to React Native Skia
@@ -314,7 +314,7 @@ Port `design-reference/graph.jsx` → `src/components/graph/NetWorthGraph.tsx`:
 
 ---
 
-### Session 4 — Home Screen
+### Session 4 — Home Screen ✅ COMPLETE
 **Goal:** Primary screen fully functional with real data.
 
 - `app/(app)/index.tsx` — home screen

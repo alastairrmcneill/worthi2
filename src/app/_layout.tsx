@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
   Geist_400Regular,
   Geist_500Medium,
@@ -69,6 +70,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.bg }}>
+      <BottomSheetModalProvider>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <NavigationGuard />
       <Stack
@@ -81,6 +83,7 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(app)" />
       </Stack>
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }
