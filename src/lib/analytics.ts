@@ -1,6 +1,6 @@
 import { Mixpanel } from 'mixpanel-react-native';
 
-const TOKEN = 'EXPO_PUBLIC_MIXPANEL_TOKEN_PLACEHOLDER';
+const TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN ?? '';
 
 const mixpanel = new Mixpanel(TOKEN, /* trackAutomaticEvents */ true);
 
