@@ -202,7 +202,7 @@ const AddAccountSheet = forwardRef<AddAccountSheetHandle, Props>(
                         { backgroundColor: `${cfg.color}20` },
                       ]}
                     >
-                      <Text style={styles.typeGlyph}>{cfg.glyph}</Text>
+                      <Ionicons name={cfg.glyph as any} size={22} color={cfg.color} />
                     </View>
                     <Text style={[styles.typeName, { color: theme.fg }]}>
                       {cfg.label}
@@ -439,7 +439,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  typeGlyph: { fontSize: 20 },
   typeName: {
     fontSize: 14,
     fontWeight: '600',

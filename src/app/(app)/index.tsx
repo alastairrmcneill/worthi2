@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
+import * as StoreReview from 'expo-store-review';
 import { track } from '@/lib/analytics';
 import {
   View,
@@ -39,6 +40,9 @@ export default function HomeScreen() {
   const isDark = useIsDark();
   const router = useRouter();
   const currency = useSettingsStore((s) => s.currency);
+
+  const hasSeenReviewPrompt = useSettingsStore((s) => s.hasSeenReviewPrompt);
+  const setHasSeenReviewPrompt = useSettingsStore((s) => s.setHasSeenReviewPrompt);
 
   const accounts = useAccountStore((s) => s.accounts);
   const entries = useAccountStore((s) => s.entries);

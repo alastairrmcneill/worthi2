@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, Platform, StyleSheet } from 'react-native';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate } from '@/lib/formatting';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { toDateMs } from '@/lib/interpolate';
 
 interface Props {
   label?: string;
@@ -14,29 +14,38 @@ interface Props {
 
 export default function DateSelector({ label = 'Date', value, onChange }: Props) {
   const theme = useTheme();
+  const [showPicker, setShowPicker] = useState(false);
+
+  function handleChange(_: DateTimePickerEvent, date?: Date) {
+    if (Platform.OS === 'android') setShowPicker(false);
+    if (date) onChange(toDateMs(date));
+  }
 
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: theme.fg2 }]}>{label}</Text>
-      <View style={[styles.row, { borderColor: theme.border, backgroundColor: theme.surface2 }]}>
-        <Pressable
-          onPress={() => onChange(value - DAY_MS)}
-          hitSlop={8}
-          style={({ pressed }) => [styles.btn, pressed && { opacity: 0.5 }]}
-        >
-          <Ionicons name="chevron-back" size={18} color={theme.fg2} />
-        </Pressable>
 
+      <Pressable
+        onPress={() => setShowPicker((v) => !v)}
+        style={({ pressed }) => [
+          styles.row,
+          { borderColor: theme.border, backgroundColor: theme.surface2 },
+          pressed && { opacity: 0.7 },
+        ]}
+      >
         <Text style={[styles.dateText, { color: theme.fg }]}>{formatDate(value)}</Text>
+        <Ionicons name="chevron-down" size={16} color={theme.fg3} />
+      </Pressable>
 
-        <Pressable
-          onPress={() => onChange(Math.min(value + DAY_MS, Date.now() + DAY_MS * 365))}
-          hitSlop={8}
-          style={({ pressed }) => [styles.btn, pressed && { opacity: 0.5 }]}
-        >
-          <Ionicons name="chevron-forward" size={18} color={theme.fg2} />
-        </Pressable>
-      </View>
+      {showPicker && (
+        <DateTimePicker
+          value={new Date(value)}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          maximumDate={new Date()}
+          onChange={handleChange}
+        />
+      )}
     </View>
   );
 }
@@ -54,18 +63,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderRadius: 12,
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-  },
-  btn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 13,
+    paddingHorizontal: 14,
   },
   dateText: {
     flex: 1,
-    textAlign: 'center',
     fontSize: 16,
     fontFamily: 'Geist_500Medium',
     letterSpacing: -0.2,

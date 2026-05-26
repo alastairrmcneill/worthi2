@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,23 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
+import * as StoreReview from 'expo-store-review';
+import {
+  BottomSheetModal,
+  BottomSheetScrollView,
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import { useTheme } from '@/hooks/use-theme';
 import { useSettingsStore, CURRENCIES, type Currency } from '@/stores/settingsStore';
 import { useAccountStore } from '@/stores/accountStore';
 import { Spacing } from '@/constants/theme';
-import { ACCOUNT_TYPES } from '@/constants/accountTypes';
 import { formatCurrency } from '@/lib/formatting';
 import { interpolateContribution } from '@/lib/interpolate';
 import TypePill from '@/components/accounts/TypePill';
@@ -22,16 +30,34 @@ import { importCsv } from '@/lib/csvImport';
 import { downloadCsvTemplate } from '@/lib/csvTemplate';
 import { track } from '@/lib/analytics';
 
+const SNAP_POINTS = ['50%'];
+
 export default function SettingsScreen() {
   const theme = useTheme();
   const router = useRouter();
   const currency = useSettingsStore((s) => s.currency);
   const setCurrency = useSettingsStore((s) => s.setCurrency);
+  const themeOverride = useSettingsStore((s) => s.themeOverride);
+  const setThemeOverride = useSettingsStore((s) => s.setThemeOverride);
   const accounts = useAccountStore((s) => s.accounts);
   const entries = useAccountStore((s) => s.entries);
   const updateAccount = useAccountStore((s) => s.updateAccount);
 
+  const currencySheetRef = useRef<BottomSheetModal>(null);
+
   const archivedAccounts = accounts.filter((a) => a.isArchived);
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
 
   function handleUnarchive(id: string) {
     const acct = accounts.find((a) => a.id === id);
@@ -63,6 +89,18 @@ export default function SettingsScreen() {
     }
   }
 
+  async function handleRateApp() {
+    track('rate_app_tapped');
+    const available = await StoreReview.isAvailableAsync();
+    if (available) {
+      await StoreReview.requestReview();
+    } else {
+      Alert.alert('Not Available', 'App Store review is not available on this device.');
+    }
+  }
+
+  const version = Constants.expoConfig?.version ?? '—';
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]} edges={['top']}>
       {/* Header */}
@@ -83,34 +121,52 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Currency */}
-        <SectionHeader title="Currency" theme={theme} />
+        {/* Appearance */}
+        <SectionHeader title="Appearance" theme={theme} />
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          {CURRENCIES.map((c, i) => (
+          {([
+            { label: 'System Default', value: null },
+            { label: 'Light', value: 'light' },
+            { label: 'Dark', value: 'dark' },
+          ] as { label: string; value: typeof themeOverride }[]).map((opt, i, arr) => (
             <Pressable
-              key={c.code}
+              key={opt.label}
               onPress={() => {
-              setCurrency(c);
-              track('currency_changed', { currency_code: c.code });
-            }}
+                setThemeOverride(opt.value);
+                track('theme_changed', { theme: opt.value ?? 'system' });
+              }}
               style={({ pressed }) => [
                 styles.row,
-                i < CURRENCIES.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border },
+                i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border },
                 pressed && { opacity: 0.7 },
               ]}
             >
-              <View style={styles.rowLeft}>
-                <Text style={[styles.currencySymbol, { color: theme.fg }]}>{c.symbol}</Text>
-                <Text style={[styles.currencyLabel, { color: theme.fg }]}>{c.code}</Text>
-              </View>
-              {currency.code === c.code && (
+              <Text style={[styles.rowLabel, { color: theme.fg }]}>{opt.label}</Text>
+              {themeOverride === opt.value && (
                 <Ionicons name="checkmark" size={18} color={theme.fg} />
               )}
             </Pressable>
           ))}
         </View>
 
-        {/* Import */}
+        {/* Currency */}
+        <SectionHeader title="Currency" theme={theme} />
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Pressable
+            onPress={() => currencySheetRef.current?.present()}
+            style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={[styles.rowLabel, { color: theme.fg }]}>Currency</Text>
+            <View style={styles.rowRight}>
+              <Text style={[styles.rowMeta, { color: theme.fg3 }]}>
+                {currency.symbol} {currency.code}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={theme.fg3} />
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Data */}
         <SectionHeader title="Data" theme={theme} />
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Pressable
@@ -139,13 +195,54 @@ export default function SettingsScreen() {
           </Pressable>
         </View>
 
+        {/* Support */}
+        <SectionHeader title="Support" theme={theme} />
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Pressable
+            onPress={() => Linking.openURL('mailto:alastair.r.mcneill@gmail.com')}
+            style={({ pressed }) => [
+              styles.row,
+              { borderBottomWidth: 1, borderBottomColor: theme.border },
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="mail-outline" size={18} color={theme.fg2} />
+              <Text style={[styles.rowLabel, { color: theme.fg }]}>Contact Us</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={theme.fg3} />
+          </Pressable>
+          <Pressable
+            onPress={handleRateApp}
+            style={({ pressed }) => [
+              styles.row,
+              { borderBottomWidth: 1, borderBottomColor: theme.border },
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="star-outline" size={18} color={theme.fg2} />
+              <Text style={[styles.rowLabel, { color: theme.fg }]}>Rate App</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={theme.fg3} />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/(app)/privacy')}
+            style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="shield-outline" size={18} color={theme.fg2} />
+              <Text style={[styles.rowLabel, { color: theme.fg }]}>Privacy Policy</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={theme.fg3} />
+          </Pressable>
+        </View>
+
         {/* Archived accounts */}
         {archivedAccounts.length > 0 && (
           <>
             <SectionHeader title="Archived Accounts" theme={theme} />
-            <View
-              style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
-            >
+            <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               {archivedAccounts.map((account, i) => (
                 <View
                   key={account.id}
@@ -174,9 +271,7 @@ export default function SettingsScreen() {
                       pressed && { opacity: 0.6 },
                     ]}
                   >
-                    <Text style={[styles.unarchiveBtnText, { color: theme.fg }]}>
-                      Restore
-                    </Text>
+                    <Text style={[styles.unarchiveBtnText, { color: theme.fg }]}>Restore</Text>
                   </Pressable>
                 </View>
               ))}
@@ -184,16 +279,62 @@ export default function SettingsScreen() {
           </>
         )}
 
+        {/* About */}
+        <SectionHeader title="About" theme={theme} />
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={styles.row}>
+            <Text style={[styles.rowLabel, { color: theme.fg }]}>Version</Text>
+            <Text style={[styles.rowMeta, { color: theme.fg3 }]}>{version}</Text>
+          </View>
+        </View>
+
         <View style={{ height: Spacing.xl }} />
       </ScrollView>
+
+      {/* Currency sheet */}
+      <BottomSheetModal
+        ref={currencySheetRef}
+        snapPoints={SNAP_POINTS}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{ backgroundColor: theme.sheetBg }}
+        handleIndicatorStyle={{ backgroundColor: theme.border }}
+        enablePanDownToClose
+      >
+        <BottomSheetScrollView contentContainerStyle={styles.sheetContent}>
+          <Text style={[styles.sheetTitle, { color: theme.fg }]}>Currency</Text>
+          <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            {CURRENCIES.map((c, i) => (
+              <Pressable
+                key={c.code}
+                onPress={() => {
+                  setCurrency(c);
+                  track('currency_changed', { currency_code: c.code });
+                  currencySheetRef.current?.dismiss();
+                }}
+                style={({ pressed }) => [
+                  styles.row,
+                  i < CURRENCIES.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <View style={styles.rowLeft}>
+                  <Text style={[styles.currencySymbol, { color: theme.fg }]}>{c.symbol}</Text>
+                  <Text style={[styles.currencyLabel, { color: theme.fg }]}>{c.code}</Text>
+                </View>
+                {currency.code === c.code && (
+                  <Ionicons name="checkmark" size={18} color={theme.fg} />
+                )}
+              </Pressable>
+            ))}
+          </View>
+        </BottomSheetScrollView>
+      </BottomSheetModal>
     </SafeAreaView>
   );
 }
 
 function SectionHeader({ title, theme }: { title: string; theme: ReturnType<typeof useTheme> }) {
-  return (
-    <Text style={[sectionStyles.header, { color: theme.fg3 }]}>{title}</Text>
-  );
+  return <Text style={[sectionStyles.header, { color: theme.fg3 }]}>{title}</Text>;
 }
 
 const sectionStyles = StyleSheet.create({
@@ -250,6 +391,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rowLabel: {
+    fontSize: 15,
+    fontFamily: 'Geist_500Medium',
+  },
+  rowMeta: {
+    fontSize: 15,
+    fontFamily: 'Geist_400Regular',
+  },
   currencySymbol: {
     fontSize: 18,
     fontWeight: '600',
@@ -258,10 +412,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   currencyLabel: {
-    fontSize: 15,
-    fontFamily: 'Geist_500Medium',
-  },
-  rowLabel: {
     fontSize: 15,
     fontFamily: 'Geist_500Medium',
   },
@@ -297,5 +447,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     fontFamily: 'Geist_500Medium',
+  },
+
+  sheetContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: 40,
+    paddingTop: Spacing.xs,
+    gap: Spacing.md,
+  },
+  sheetTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: 'Geist_600SemiBold',
+    letterSpacing: -0.3,
+    textAlign: 'center',
+    paddingVertical: Spacing.sm,
   },
 });

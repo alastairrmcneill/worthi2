@@ -1,5 +1,7 @@
 import type { Account, Entry, SeriesPoint } from '@/types';
 
+const DAY_MS = 86_400_000;
+
 // Net worth contribution of a single entry for a given account
 export function entryContribution(account: Account, entry: Entry): number {
   if (account.type === 'house') {
@@ -10,173 +12,119 @@ export function entryContribution(account: Account, entry: Entry): number {
   return entry.value;
 }
 
-// Value at date T for a single account, linearly interpolated between entries.
-// Returns 0 before the first entry; carries last value forward after the last entry.
+// Value at date T using step-function carry-forward: last known entry on or before T.
+// Returns 0 before the first entry.
 export function interpolateContribution(
   account: Account,
   entries: Entry[],
   date: number
 ): number {
   if (entries.length === 0) return 0;
-
-  const sorted = entries.slice().sort((a, b) => a.date - b.date);
-  const first = sorted[0];
-  const last = sorted[sorted.length - 1];
-
-  if (date < first.date) return 0;
-  if (date >= last.date) return entryContribution(account, last);
-
-  // Find the two entries that bracket `date`
-  let lo = sorted[0];
-  let hi = sorted[1];
-  for (let i = 0; i < sorted.length - 1; i++) {
-    if (sorted[i].date <= date && sorted[i + 1].date > date) {
-      lo = sorted[i];
-      hi = sorted[i + 1];
-      break;
-    }
-  }
-
-  const t = (date - lo.date) / (hi.date - lo.date);
-  const vLo = entryContribution(account, lo);
-  const vHi = entryContribution(account, hi);
-  return vLo + (vHi - vLo) * t;
+  const sorted = entries.slice().sort((a, b) => b.date - a.date);
+  const entry = sorted.find((e) => e.date <= date);
+  return entry ? entryContribution(account, entry) : 0;
 }
 
-// Build a uniform series of points for one account between startDate and endDate.
+// Generate sample dates: daily for ranges ≤ 31 days, monthly + today otherwise.
+function sampleDates(startMs: number, endMs: number): number[] {
+  const rangeDays = (endMs - startMs) / DAY_MS;
+  const dates: number[] = [];
+
+  if (rangeDays <= 31) {
+    let d = startMs;
+    while (d <= endMs) {
+      dates.push(d);
+      d += DAY_MS;
+    }
+    if (dates[dates.length - 1] !== endMs) dates.push(endMs);
+  } else {
+    const start = new Date(startMs);
+    let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+    while (cur.getTime() <= endMs) {
+      dates.push(cur.getTime());
+      cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+    }
+    if (dates[dates.length - 1] !== endMs) dates.push(endMs);
+  }
+
+  return dates;
+}
+
+// Build a series for one account between startDate and endDate (step-function).
 export function buildAccountSeries(
   account: Account,
   entries: Entry[],
   startDate: number,
-  endDate: number,
-  numPoints = 80
+  endDate: number
 ): SeriesPoint[] {
-  const range = endDate - startDate;
-  const points: SeriesPoint[] = [];
-  for (let i = 0; i < numPoints; i++) {
-    const ts = startDate + (range * i) / (numPoints - 1);
-    points.push({ ts, value: interpolateContribution(account, entries, ts) });
-  }
-  return points;
+  return sampleDates(startDate, endDate).map((ts) => ({
+    ts,
+    value: interpolateContribution(account, entries, ts),
+  }));
 }
 
-// Build a uniform series for total net worth (sum across all accounts).
+// Build total net worth series (sum across all accounts).
 export function buildTotalSeries(
   accounts: Account[],
   entriesByAccount: Map<string, Entry[]>,
   startDate: number,
-  endDate: number,
-  numPoints = 80
+  endDate: number
 ): SeriesPoint[] {
-  const range = endDate - startDate;
-  const points: SeriesPoint[] = [];
-  for (let i = 0; i < numPoints; i++) {
-    const ts = startDate + (range * i) / (numPoints - 1);
+  return sampleDates(startDate, endDate).map((ts) => {
     let total = 0;
     for (const account of accounts) {
       const entries = entriesByAccount.get(account.id) ?? [];
       total += interpolateContribution(account, entries, ts);
     }
-    points.push({ ts, value: total });
-  }
-  return points;
+    return { ts, value: total };
+  });
 }
 
-// For a house account: build two series — equity (user share) and full property value.
+// House account: two series — equity (user share) and full property value.
 export function buildHouseSeries(
   account: Account,
   entries: Entry[],
   startDate: number,
-  endDate: number,
-  numPoints = 80
+  endDate: number
 ): { equity: SeriesPoint[]; propertyValue: SeriesPoint[] } {
-  const range = endDate - startDate;
-  const sorted = entries.slice().sort((a, b) => a.date - b.date);
+  const sorted = entries.slice().sort((a, b) => b.date - a.date);
   const equity: SeriesPoint[] = [];
   const propertyValue: SeriesPoint[] = [];
 
-  for (let i = 0; i < numPoints; i++) {
-    const ts = startDate + (range * i) / (numPoints - 1);
-
-    if (sorted.length === 0 || ts < sorted[0].date) {
+  for (const ts of sampleDates(startDate, endDate)) {
+    const entry = sorted.find((e) => e.date <= ts);
+    if (!entry) {
       equity.push({ ts, value: 0 });
       propertyValue.push({ ts, value: 0 });
-      continue;
+    } else {
+      const mortgage = entry.mortgageBalance ?? 0;
+      equity.push({ ts, value: (entry.value - mortgage) * (account.ownershipPct / 100) });
+      propertyValue.push({ ts, value: entry.value });
     }
-
-    const last = sorted[sorted.length - 1];
-    if (ts >= last.date) {
-      const mortgage = last.mortgageBalance ?? 0;
-      equity.push({ ts, value: (last.value - mortgage) * (account.ownershipPct / 100) });
-      propertyValue.push({ ts, value: last.value });
-      continue;
-    }
-
-    let lo = sorted[0];
-    let hi = sorted[1];
-    for (let j = 0; j < sorted.length - 1; j++) {
-      if (sorted[j].date <= ts && sorted[j + 1].date > ts) {
-        lo = sorted[j];
-        hi = sorted[j + 1];
-        break;
-      }
-    }
-
-    const t = (ts - lo.date) / (hi.date - lo.date);
-    const interpValue = lo.value + (hi.value - lo.value) * t;
-    const interpMortgage = (lo.mortgageBalance ?? 0) + ((hi.mortgageBalance ?? 0) - (lo.mortgageBalance ?? 0)) * t;
-
-    equity.push({ ts, value: (interpValue - interpMortgage) * (account.ownershipPct / 100) });
-    propertyValue.push({ ts, value: interpValue });
   }
 
   return { equity, propertyValue };
 }
 
-// For an investment account: build value and deposited series separately.
+// Investment account: value and deposited series separately.
 export function buildInvestmentSeries(
   entries: Entry[],
   startDate: number,
-  endDate: number,
-  numPoints = 80
+  endDate: number
 ): { value: SeriesPoint[]; deposited: SeriesPoint[] } {
-  const range = endDate - startDate;
-  const sorted = entries.slice().sort((a, b) => a.date - b.date);
+  const sorted = entries.slice().sort((a, b) => b.date - a.date);
   const value: SeriesPoint[] = [];
   const deposited: SeriesPoint[] = [];
 
-  for (let i = 0; i < numPoints; i++) {
-    const ts = startDate + (range * i) / (numPoints - 1);
-
-    if (sorted.length === 0 || ts < sorted[0].date) {
+  for (const ts of sampleDates(startDate, endDate)) {
+    const entry = sorted.find((e) => e.date <= ts);
+    if (!entry) {
       value.push({ ts, value: 0 });
       deposited.push({ ts, value: 0 });
-      continue;
+    } else {
+      value.push({ ts, value: entry.value });
+      deposited.push({ ts, value: entry.deposited ?? 0 });
     }
-
-    const last = sorted[sorted.length - 1];
-    if (ts >= last.date) {
-      value.push({ ts, value: last.value });
-      deposited.push({ ts, value: last.deposited ?? 0 });
-      continue;
-    }
-
-    let lo = sorted[0];
-    let hi = sorted[1];
-    for (let j = 0; j < sorted.length - 1; j++) {
-      if (sorted[j].date <= ts && sorted[j + 1].date > ts) {
-        lo = sorted[j];
-        hi = sorted[j + 1];
-        break;
-      }
-    }
-
-    const t = (ts - lo.date) / (hi.date - lo.date);
-    value.push({ ts, value: lo.value + (hi.value - lo.value) * t });
-    deposited.push({
-      ts,
-      value: (lo.deposited ?? 0) + ((hi.deposited ?? 0) - (lo.deposited ?? 0)) * t,
-    });
   }
 
   return { value, deposited };

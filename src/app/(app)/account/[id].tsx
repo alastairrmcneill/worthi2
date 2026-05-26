@@ -281,7 +281,6 @@ export default function AccountDetailScreen() {
             onScrub={setScrub}
             showAxis
             showCrosshair
-            showZero
           />
         </View>
 

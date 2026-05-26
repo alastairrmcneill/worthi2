@@ -22,9 +22,11 @@ interface SettingsState {
   currency: Currency;
   themeOverride: ThemeOverride;
   hasOnboarded: boolean;
+  hasSeenReviewPrompt: boolean;
   setCurrency: (currency: Currency) => void;
   setThemeOverride: (override: ThemeOverride) => void;
   setHasOnboarded: (value: boolean) => void;
+  setHasSeenReviewPrompt: (value: boolean) => void;
 }
 
 function detectDefaultCurrency(): Currency {
@@ -48,9 +50,11 @@ export const useSettingsStore = create<SettingsState>()(
       currency: detectDefaultCurrency(),
       themeOverride: null,
       hasOnboarded: false,
+      hasSeenReviewPrompt: false,
       setCurrency: (currency) => set({ currency }),
       setThemeOverride: (themeOverride) => set({ themeOverride }),
       setHasOnboarded: (hasOnboarded) => set({ hasOnboarded }),
+      setHasSeenReviewPrompt: (hasSeenReviewPrompt) => set({ hasSeenReviewPrompt }),
     }),
     {
       name: 'worthi-settings',

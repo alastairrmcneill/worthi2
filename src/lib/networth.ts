@@ -59,13 +59,12 @@ export function buildHomeSeries(
   entriesByAccount: Map<string, Entry[]>,
   filter: AccountType | 'all',
   startDate: number,
-  endDate: number,
-  numPoints = 80
+  endDate: number
 ): SeriesPoint[] {
   const filtered = accounts.filter(
     (a) => filter === 'all' || a.type === filter
   );
-  return buildTotalSeries(filtered, entriesByAccount, startDate, endDate, numPoints);
+  return buildTotalSeries(filtered, entriesByAccount, startDate, endDate);
 }
 
 // Investment return stats.

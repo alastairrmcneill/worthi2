@@ -119,13 +119,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Geist_600SemiBold',
   },
   sharedBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
     borderRadius: 999,
   },
   sharedText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     fontFamily: 'Geist_600SemiBold',
+    letterSpacing: 0.2,
   },
 });

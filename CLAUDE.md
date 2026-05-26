@@ -6,7 +6,7 @@ Personal net worth tracking app for iOS + Android (React Native / Expo). Focus: 
 
 ## Status
 
-**Phase:** Feature-complete. All 9 sessions done. Analytics wired.
+**Phase:** Feature-complete. Sessions 1–9, Analytics, Session 10 (Graph & Icons), Session 11 (Date Picker & Settings) done. Session 12 (Review Prompt) store wired, UI card pending.
 
 **Design reference exists:** `design-reference/` contains:
 - `vibrant.jsx` — full UI prototype (home, detail, onboarding, settings screens)
@@ -28,7 +28,7 @@ Personal net worth tracking app for iOS + Android (React Native / Expo). Focus: 
 | Bottom sheets | `@gorhom/bottom-sheet` v5 |
 | Storage | `expo-sqlite` (local-first; cloud sync deferred) |
 | Font | Geist (bundled via `expo-font`) |
-| Theme | Dark (Dusk) + Light (Linen), follows system, user can override |
+| Theme | Dark (Dusk) + Light (Linen), follows system, user can override in Settings |
 | Analytics | `mixpanel-react-native` (anonymous, no PII) |
 | Tests | None for now |
 
@@ -37,6 +37,7 @@ Personal net worth tracking app for iOS + Android (React Native / Expo). Focus: 
 ```
 expo-sqlite expo-font expo-secure-store expo-haptics expo-router
 expo-document-picker expo-sharing expo-file-system
+expo-store-review @react-native-community/datetimepicker
 @shopify/react-native-skia @gorhom/bottom-sheet
 react-native-gesture-handler react-native-reanimated
 react-native-safe-area-context react-native-screens
@@ -59,6 +60,8 @@ zustand mixpanel-react-native
 | House | `house` | `#14B8A6` teal | Property value + mortgage balance; can be shared (see below) |
 
 Colors used consistently: type chips, account dots, graph lines, filter chips.
+
+Account type cards and onboarding chips use **outlined Ionicons** on a coloured background (not emoji). Glyph names stored in `accountTypes.ts` (`glyph` field): `wallet-outline`, `card-outline`, `trending-up-outline`, `document-text-outline`, `shield-checkmark-outline`, `home-outline`.
 
 ---
 
@@ -83,10 +86,11 @@ Colors used consistently: type chips, account dots, graph lines, filter chips.
 - Unarchive from Settings > Archived Accounts
 
 ### Graph interpolation
-- Linear interpolation between logged entries at irregular intervals
+- **Step-function carry-forward**: last known entry on or before the date; holds flat until next entry
 - Before first entry: value = 0
-- After last entry: carry last value forward (flat)
+- After last entry: carry last value forward indefinitely (flat)
 - Archived accounts: same rule (carry forward indefinitely)
+- Sample points: daily for ranges ≤ 31 days; 1st of each month + today for longer ranges
 
 ### Home screen
 - Big number at top = total net worth (or filtered total when type chip active)
@@ -94,8 +98,9 @@ Colors used consistently: type chips, account dots, graph lines, filter chips.
 - Accounts sorted by absolute value descending
 
 ### Currency
-- User selects from settings; change is relabel only (no conversion)
+- User selects from settings (single row → BottomSheetModal); change is relabel only (no conversion)
 - Auto-detected from device locale on first launch
+- Display format in settings row: `£ GBP`
 
 ---
 
@@ -139,12 +144,13 @@ src/
       _layout.tsx             Stack navigator
       index.tsx               Home screen
       account/[id].tsx        Account detail screen
-      settings.tsx            Settings screen
+      settings.tsx            Settings screen (Appearance / Currency / Data / Support / About + Archived)
       import-result.tsx       CSV import summary screen
+      privacy.tsx             In-app privacy policy screen
 
   components/
     graph/
-      NetWorthGraph.tsx       Skia graph: Catmull-Rom smoothing, gradient fill, scrub, optional dashed 2nd line
+      NetWorthGraph.tsx       Skia graph: Fritsch-Carlson monotonic spline, gradient fill, scrub, optional dashed 2nd line
       RangePicker.tsx         1M/3M/6M/1Y/All pill buttons
     accounts/
       AccountCard.tsx         Home list row (name, TypePill, value, shared badge)
@@ -156,19 +162,19 @@ src/
       AddEntrySheet.tsx       Add/edit entry BottomSheetModal (presentForAccount / presentForEdit)
     common/
       Field.tsx               Label + BottomSheetTextInput, optional currency prefix, numeric mode
-      DateSelector.tsx        ← date → chevron row (midnight-normalised unix ms)
+      DateSelector.tsx        Native date picker (@react-native-community/datetimepicker); no future dates; spinner iOS, modal Android
       IconButton.tsx          Ionicons wrapper with surface background
 
   stores/
     accountStore.ts           Zustand: accounts + entries CRUD, wired to SQLite
-    settingsStore.ts          Zustand: currency, themeOverride, hasOnboarded (persisted AsyncStorage)
+    settingsStore.ts          Zustand: currency, themeOverride, hasOnboarded, hasSeenReviewPrompt (persisted AsyncStorage)
 
   db/
     client.ts                 expo-sqlite setup + migrations runner
     queries.ts                Typed CRUD helpers (snake_case ↔ camelCase mappers)
 
   lib/
-    interpolate.ts            Linear interpolation; buildAccountSeries, buildInvestmentSeries, buildHouseSeries
+    interpolate.ts            Step-function interpolation; buildAccountSeries, buildInvestmentSeries, buildHouseSeries (no numPoints; monthly/daily sampling)
     networth.ts               currentNetWorth, filteredNetWorth, buildHomeSeries, investmentStats, houseStats
     formatting.ts             Intl.NumberFormat helpers: formatCurrency, formatPercent, formatDate, ISO date parse
     csvImport.ts              DocumentPicker → parse/validate CSV → write to store → navigate to import-result
@@ -179,7 +185,7 @@ src/
     use-theme.ts              useTheme() + useIsDark() hooks
 
   constants/
-    accountTypes.ts           ACCOUNT_TYPES config (color, label, glyph, sign, description)
+    accountTypes.ts           ACCOUNT_TYPES config (color, label, glyph as Ionicons name, sign, description)
     theme.ts                  DARK_THEME, LIGHT_THEME, HOME_GRAPH_COLOR, Spacing
 
   types/
@@ -216,9 +222,13 @@ src/
 | `detail_range_changed` | `range`, `account_type` | account/[id].tsx range picker |
 | `onboarding_completed` | — | onboarding after account saved |
 | `onboarding_skipped` | — | onboarding skip / "Skip for now" |
-| `currency_changed` | `currency_code` | settings currency selector |
+| `currency_changed` | `currency_code` | settings currency sheet |
 | `csv_imported` | `accounts_count`, `entries_count`, `skipped_count` | csvImport.ts |
 | `csv_template_downloaded` | — | settings download button |
+| `theme_changed` | `theme` | settings appearance section |
+| `rate_app_tapped` | — | settings Rate App row |
+| `review_prompted` | — | home review card "Yes" |
+| `review_dismissed` | — | home review card "Not yet" |
 
 No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonymous `distinct_id` automatically.
 
@@ -234,6 +244,7 @@ No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonym
 - Account list (sorted by |value| desc)
 - FAB (+) → `AddAccountSheet`
 - Empty state: £0, flat graph, "Add your first account" CTA
+- Review prompt card (pending): shows when `entries.length >= 1 && !hasSeenReviewPrompt`
 
 ### Account Detail
 - Header: back, TypePill + name, 3-dot menu (Archive / Rename / Delete)
@@ -251,13 +262,20 @@ No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonym
 - Rename modal: TextInput modal, cross-platform
 
 ### Settings
-- Currency selector (GBP/USD/EUR/AUD/CAD)
-- Import from CSV + Download template
-- Archived accounts: list with Restore buttons
+- **Appearance**: System / Light / Dark radio list (checkmark on active); calls `setThemeOverride`
+- **Currency**: single tappable row showing `£ GBP` → opens `BottomSheetModal` with currency list
+- **Data**: Import from CSV + Download template
+- **Support**: Contact Us (mailto), Rate App (`expo-store-review`), Privacy Policy (→ privacy screen)
+- **Archived accounts**: list with Restore buttons (only shown when accounts exist)
+- **About**: Version number from `Constants.expoConfig?.version`
+
+### Privacy
+- Plain-text privacy policy screen
+- Covers: local-only storage, anonymous analytics (Mixpanel), no advertising IDs, contact email
 
 ### Onboarding (3 slides, FlatList)
 1. "Know your number" — hero net worth number
-2. "Every account, one place" — type chips grid
+2. "Every account, one place" — type chips grid (Ionicons icons)
 3. "Let's get started" — opens `AddAccountSheet`; "Skip for now" link
 
 After account saved → `hasOnboarded = true` → home.
@@ -299,12 +317,13 @@ purchase_price, original_deposit, is_shared, ownership_pct
 `src/components/graph/NetWorthGraph.tsx`:
 
 - `@shopify/react-native-skia`: `Canvas`, `Path`, `LinearGradient`, `DashPathEffect`
-- Catmull-Rom → cubic Bezier smoothing
+- **Fritsch-Carlson monotonic cubic Hermite spline** (no overshoot; replaced Catmull-Rom)
 - Area fill with gradient
 - Optional second line (`series2`, dashed or solid)
 - Touch scrub via `PanResponder` → nearest point → `onScrub({ts, value, value2, x, y})`
 - Release → `onScrub(null)` clears crosshair
-- Props: `series`, `series2`, `series2Style`, `series2Color`, `color`, `fillGradient`, `onScrub`, `showAxis`, `showCrosshair`, `yDomainFrom`, `showZero`
+- Y-axis auto-fits actual data range (8% padding each side); no `showZero` prop
+- Props: `series`, `series2`, `series2Style`, `series2Color`, `color`, `fillGradient`, `onScrub`, `showAxis`, `showCrosshair`, `yDomainFrom`
 
 ---
 
@@ -329,12 +348,12 @@ Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct key
 
 ## Add Account Sheet (3 steps)
 
-1. **Type picker**: 2-col grid, coloured cards with glyph + description
+1. **Type picker**: 2-col grid, coloured cards with Ionicons icon + description
 2. **Account details**:
    - Name field
    - House only: purchase price (optional), original deposit (optional), "Shared asset" toggle → ownership % field (1–99, default 50)
 3. **First entry**:
-   - `DateSelector` (today default, ← → chevrons)
+   - `DateSelector` (today default, tappable row → native OS picker; no future dates)
    - investment: deposited running total + current value
    - house: property value + mortgage balance (optional)
    - credit_card / loan: amount owed (shown positive; stored negative)
@@ -355,20 +374,47 @@ Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct key
 ### Session 9 — Polish ✅ COMPLETE
 ### Analytics — Mixpanel ✅ COMPLETE
 
+### Session 10 — Graph & Icons ✅ COMPLETE
+- Account type icons: emoji glyphs → Ionicons names in `accountTypes.ts`
+- `AddAccountSheet` type grid and onboarding slide 2 render `<Ionicons>` instead of `<Text>`
+- Ownership badge in `AccountCard` sized to match `TypePill` (same height/padding/font)
+- Graph interpolation: step-function carry-forward (last known value held flat until next entry)
+- Sample points: daily for ≤ 31-day ranges; monthly + today for longer ranges (no `numPoints` param)
+- Graph curve: Fritsch-Carlson monotonic cubic Hermite spline (no overshoot; replaced Catmull-Rom)
+- Removed `showZero` prop from `NetWorthGraph`; y-axis auto-fits actual data range
+
+### Session 11 — Date Picker & Settings Overhaul ✅ COMPLETE
+- `DateSelector` rewritten: tappable row → native `DateTimePicker` (spinner iOS, modal Android); no future dates
+- Settings: **Appearance** section — System / Light / Dark radio rows; calls `setThemeOverride`; tracks `theme_changed`
+- Settings: **Currency** — single row `£ GBP` → `BottomSheetModal` with currency list
+- Settings: **Support** section — Contact Us (mailto), Rate App (`expo-store-review`), Privacy Policy
+- Settings: **About** section — version from `Constants.expoConfig?.version`
+- New screen: `src/app/(app)/privacy.tsx` — in-app privacy policy
+
+### Session 12 — In-App Review Prompt 🔄 PARTIAL
+- `settingsStore`: added `hasSeenReviewPrompt: boolean` + `setHasSeenReviewPrompt` ✅
+- `index.tsx`: imports + store hooks wired (`StoreReview`, `hasSeenReviewPrompt`, `setHasSeenReviewPrompt`) ✅
+- **Pending**: review card UI in `index.tsx` — "Enjoying Worthi?" card when `entries.length >= 1 && !hasSeenReviewPrompt`; "Yes, love it!" → `StoreReview.requestReview()` + mark seen + track `review_prompted`; "Not yet" → mark seen + track `review_dismissed`
+
 ---
 
 ## Verification Checklist
 
 - [ ] Add investment + shared house (60%) + credit card; net worth = investment + (equity × 0.6) − CC
-- [ ] Log entries at irregular dates; graph interpolates smoothly
+- [ ] Log entries at irregular dates; graph holds flat between entries (no interpolated values)
 - [ ] Scrub graph; header updates; crosshair clears on release
+- [ ] Graph y-axis fits actual data range; no gap below minimum value
 - [ ] Archive account; hidden from list; historical graph data unchanged
 - [ ] Toggle currency; symbol changes, numbers unchanged
 - [ ] Kill + reopen app; all data persists
-- [ ] System dark/light toggle; theme follows
+- [ ] Settings Appearance rows toggle theme live (System / Light / Dark)
+- [ ] Settings Currency row shows `£ GBP`; tap opens sheet; selection updates immediately
+- [ ] Settings Contact opens mail app; Privacy navigates to privacy screen; Rate App fires review dialog
+- [ ] System dark/light toggle; theme follows (when Appearance = System)
 - [ ] Import test CSV; summary shows correct counts + skipped rows
 - [ ] Download CSV template; correct columns + example data
 - [ ] Add account via onboarding; hasOnboarded set; lands on home
+- [ ] Date picker in add/edit flows: tapping date opens native picker; future dates disabled
 - [ ] Mixpanel events appear in dashboard (check is_dev = true in dev build)
 
 ---
@@ -378,4 +424,3 @@ Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct key
 - Cloud sync (Supabase)
 - Screenshot OCR import (vision model extracts values from old app screenshots)
 - Manual account reordering
-- Theme override in settings UI

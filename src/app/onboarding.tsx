@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-theme';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { ACCOUNT_TYPES, TYPE_ORDER } from '@/constants/accountTypes';
@@ -90,7 +91,7 @@ export default function OnboardingScreen() {
                     { backgroundColor: `${cfg.color}18`, borderColor: `${cfg.color}30` },
                   ]}
                 >
-                  <Text style={styles.typeChipGlyph}>{cfg.glyph}</Text>
+                  <Ionicons name={cfg.glyph as any} size={16} color={cfg.color} />
                   <Text style={[styles.typeChipLabel, { color: cfg.color }]}>
                     {cfg.label}
                   </Text>
@@ -255,7 +256,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
   },
-  typeChipGlyph: { fontSize: 16 },
   typeChipLabel: {
     fontSize: 13,
     fontWeight: '600',

@@ -38,26 +38,56 @@ interface Props {
   onScrub?: (info: ScrubInfo | null) => void;
   thick?: number;
   yDomainFrom?: [number, number];
-  showZero?: boolean;
 }
 
-// Catmull-Rom → cubic Bezier SVG path (same algorithm as design-reference/graph.jsx)
-function smoothSvgPath(pts: [number, number][]): string {
-  if (pts.length === 0) return '';
-  if (pts.length === 1) return `M ${pts[0][0]} ${pts[0][1]}`;
-  let d = `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] ?? pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] ?? p2;
-    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
-    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
-    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
-    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
-    d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
+// Fritsch-Carlson monotonic cubic Hermite spline — no overshoot, no values that never existed
+function monotonicSplinePath(pts: [number, number][]): string {
+  const n = pts.length;
+  if (n === 0) return '';
+  if (n === 1) return `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
+  if (n === 2) {
+    return `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)} L ${pts[1][0].toFixed(2)} ${pts[1][1].toFixed(2)}`;
   }
-  return d;
+
+  // chord slopes
+  const d: number[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    const dx = pts[i + 1][0] - pts[i][0];
+    d.push(dx === 0 ? 0 : (pts[i + 1][1] - pts[i][1]) / dx);
+  }
+
+  // initial tangents
+  const m: number[] = new Array(n);
+  m[0] = d[0];
+  m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = (d[i - 1] + d[i]) / 2;
+
+  // monotonicity conditions
+  for (let i = 0; i < n - 1; i++) {
+    if (Math.abs(d[i]) < 1e-10) {
+      m[i] = 0;
+      m[i + 1] = 0;
+    } else {
+      const alpha = m[i] / d[i];
+      const beta = m[i + 1] / d[i];
+      const h = Math.sqrt(alpha * alpha + beta * beta);
+      if (h > 3) {
+        m[i] = (3 / h) * alpha * Math.abs(d[i]);
+        m[i + 1] = (3 / h) * beta * Math.abs(d[i]);
+      }
+    }
+  }
+
+  let path = `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const dx = pts[i + 1][0] - pts[i][0];
+    const cp1x = pts[i][0] + dx / 3;
+    const cp1y = pts[i][1] + (m[i] * dx) / 3;
+    const cp2x = pts[i + 1][0] - dx / 3;
+    const cp2y = pts[i + 1][1] - (m[i + 1] * dx) / 3;
+    path += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${pts[i + 1][0].toFixed(2)} ${pts[i + 1][1].toFixed(2)}`;
+  }
+  return path;
 }
 
 function hexAlpha(hex: string, alpha: number): string {
@@ -84,7 +114,6 @@ export default function NetWorthGraph({
   onScrub,
   thick = 2.5,
   yDomainFrom,
-  showZero = false,
 }: Props) {
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState<{ x: number; y: number; y2: number | null } | null>(null);
@@ -103,7 +132,6 @@ export default function NetWorthGraph({
     let maxV = Math.max(...allVals);
 
     if (yDomainFrom) { minV = yDomainFrom[0]; maxV = yDomainFrom[1]; }
-    if (showZero) { minV = Math.min(minV, 0); maxV = Math.max(maxV, 0); }
 
     const span = Math.max(1, maxV - minV);
     const yMin = minV - span * 0.08;
@@ -123,7 +151,7 @@ export default function NetWorthGraph({
       : null;
 
     return { pts, pts2 };
-  }, [series, series2, width, height, padTop, padBottom, padX, yDomainFrom, showZero]);
+  }, [series, series2, width, height, padTop, padBottom, padX, yDomainFrom]);
 
   // Build Skia paths from computed pixel coords
   const { linePath, areaPath, line2Path, axisPath } = useMemo(() => {
@@ -135,12 +163,12 @@ export default function NetWorthGraph({
       return { linePath: null, areaPath: null, line2Path: null, axisPath: ap };
     }
 
-    const svgLine = smoothSvgPath(pts);
+    const svgLine = monotonicSplinePath(pts);
     const svgArea = `${svgLine} L ${pts[pts.length - 1][0].toFixed(2)} ${(height - padBottom).toFixed(2)} L ${pts[0][0].toFixed(2)} ${(height - padBottom).toFixed(2)} Z`;
 
     const linePath = Skia.Path.MakeFromSVGString(svgLine);
     const areaPath = Skia.Path.MakeFromSVGString(svgArea);
-    const line2Path = pts2 ? Skia.Path.MakeFromSVGString(smoothSvgPath(pts2)) : null;
+    const line2Path = pts2 ? Skia.Path.MakeFromSVGString(monotonicSplinePath(pts2)) : null;
 
     const axisPath = Skia.Path.Make();
     axisPath.moveTo(padX, height - padBottom);
