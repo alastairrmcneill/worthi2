@@ -91,12 +91,7 @@ export default function SettingsScreen() {
 
   async function handleRateApp() {
     track('rate_app_tapped');
-    const available = await StoreReview.isAvailableAsync();
-    if (available) {
-      await StoreReview.requestReview();
-    } else {
-      Alert.alert('Not Available', 'App Store review is not available on this device.');
-    }
+    await StoreReview.requestReview();
   }
 
   const version = Constants.expoConfig?.version ?? '—';

@@ -28,7 +28,7 @@ Personal net worth tracking app for iOS + Android (React Native / Expo). Focus: 
 | Graph         | React Native Skia (`@shopify/react-native-skia`)                           |
 | Bottom sheets | `@gorhom/bottom-sheet` v5                                                  |
 | Storage       | `expo-sqlite` (local-first; cloud sync deferred)                           |
-| Font          | Geist (bundled via `expo-font`)                                            |
+| Font          | Geist + Geist Mono (`@expo-google-fonts/geist`, `@expo-google-fonts/geist-mono`) |
 | Theme         | Dark (Dusk) + Light (Linen), follows system, user can override in Settings |
 | Analytics     | `mixpanel-react-native` (anonymous, no PII)                                |
 | Tests         | None for now                                                               |
@@ -225,7 +225,7 @@ src/
 | `account_created`         | `account_type`                                     | AddAccountSheet on save          |
 | `entry_added`             | `account_type`                                     | AddEntrySheet on save            |
 | `entry_edited`            | `account_type`                                     | AddEntrySheet on update          |
-| `entry_deleted`           | `account_type`                                     | account/[id].tsx delete confirm  |
+| `entry_deleted`           | `account_type`                                     | AddEntrySheet delete confirm     |
 | `account_archived`        | `account_type`                                     | account/[id].tsx 3-dot menu      |
 | `account_unarchived`      | `account_type`                                     | account/[id].tsx + settings      |
 | `account_deleted`         | `account_type`                                     | account/[id].tsx delete confirm  |
@@ -271,7 +271,8 @@ No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonym
   - current/pension: current balance, last updated
   - credit_card/loan: amount owed, last updated
 - "Add Entry" button → `AddEntrySheet`
-- History list (newest first): date + values + pencil (edit) + trash (delete)
+- History list (newest first): date + value; **tap row → `AddEntrySheet` in edit mode**
+- Edit sheet has "Delete entry" button (danger colour, shown only when editing) → Alert confirm → deletes entry
 - 3-dot menu: ActionSheetIOS on iOS / Alert on Android
 - Rename modal: TextInput modal, cross-platform
 
@@ -280,7 +281,7 @@ No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonym
 - **Appearance**: System / Light / Dark radio list (checkmark on active); calls `setThemeOverride`
 - **Currency**: single tappable row showing `£ GBP` → opens `BottomSheetModal` with currency list
 - **Data**: Import from CSV + Download template
-- **Support**: Contact Us (mailto), Rate App (`expo-store-review`), Privacy Policy (→ privacy screen)
+- **Support**: Contact Us (mailto), Rate App (`expo-store-review` — calls `requestReview()` directly, no `isAvailableAsync()` guard), Privacy Policy (→ privacy screen)
 - **Archived accounts**: list with Restore buttons (only shown when accounts exist)
 - **About**: Version number from `Constants.expoConfig?.version`
 
@@ -439,6 +440,15 @@ Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct key
 - **Currency selector**: `currencySymbol` style `width` increased `24 → 36` in `settings.tsx` to prevent multi-char symbols (A$, CA$) stacking vertically
 - **Filter chips**: single-select → **multi-select** (`Set<AccountType>`); "All" clears set; tapping active type deselects it; `networth.ts` functions updated to accept `AccountType[]`
 - **Archive graph fix**: archived accounts were excluded from graph + net worth because `activeAccounts` was passed to `buildHomeSeries`/`currentNetWorth`; fixed to pass all `accounts` — archived history now correctly appears in graph with step-function carry-forward
+
+### Session 13 — Font & UX Polish ✅ COMPLETE
+
+- **Geist Mono for currency values**: `GeistMono_600SemiBold` loaded in `_layout.tsx`; applied to `AccountCard` value, `statStyles.value` (stats grid), `histStyles.value` (history rows), `currencySymbol` in settings — hero display numbers stay `Geist_700Bold`
+- **History row interaction**: removed always-visible pencil + trash icon buttons; tap row → opens `AddEntrySheet` in edit mode; delete moved into the sheet
+- **AddEntrySheet delete button**: "Delete entry" in `theme.danger`, shown only when `isEditing`; calls Alert confirm then `deleteEntry` + dismiss + reset; `entry_deleted` analytics now tracked here
+- **AddEntrySheet icon chip**: fixed — was rendering `typeConfig.glyph` string as `<Text>`; now renders `<Ionicons name={typeConfig.glyph} />`
+- **Rate App**: removed `isAvailableAsync()` guard; calls `StoreReview.requestReview()` directly
+- **Seed data**: `seed-data.csv` added to project root — 7 accounts, 70 entries; import via Settings → Data → Import from CSV
 
 ---
 
