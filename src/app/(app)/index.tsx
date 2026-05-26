@@ -62,6 +62,7 @@ export default function HomeScreen() {
 
   const [scrub, setScrub] = useState<ScrubInfo | null>(null);
 
+  // activeAccounts: non-archived only — used for the account list and isEmpty
   const activeAccounts = useMemo(() => accounts.filter((a) => !a.isArchived), [accounts]);
 
   const entriesMap = useMemo(() => {
@@ -75,24 +76,25 @@ export default function HomeScreen() {
   }, [entries]);
 
   const now = todayMs();
+  // rangeStartDate and graph use all accounts so archived history is included
   const startDate = useMemo(
-    () => rangeStartDate(range, activeAccounts, entriesMap),
-    [range, activeAccounts, entriesMap],
+    () => rangeStartDate(range, accounts, entriesMap),
+    [range, accounts, entriesMap],
   );
 
   const selectedTypesArray = useMemo(() => Array.from(selectedTypes), [selectedTypes]);
 
   const series = useMemo(
-    () => buildHomeSeries(activeAccounts, entriesMap, selectedTypesArray, startDate, now),
-    [activeAccounts, entriesMap, selectedTypesArray, startDate, now],
+    () => buildHomeSeries(accounts, entriesMap, selectedTypesArray, startDate, now),
+    [accounts, entriesMap, selectedTypesArray, startDate, now],
   );
 
   const netWorth = useMemo(
     () =>
       selectedTypes.size === 0
-        ? currentNetWorth(activeAccounts, entriesMap)
-        : filteredNetWorth(activeAccounts, entriesMap, selectedTypesArray),
-    [activeAccounts, entriesMap, selectedTypes, selectedTypesArray],
+        ? currentNetWorth(accounts, entriesMap)
+        : filteredNetWorth(accounts, entriesMap, selectedTypesArray),
+    [accounts, entriesMap, selectedTypes, selectedTypesArray],
   );
 
   const displayValue = scrub ? scrub.value : netWorth;

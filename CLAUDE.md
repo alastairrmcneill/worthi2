@@ -85,8 +85,10 @@ Account type cards and onboarding chips use **outlined Ionicons** on a coloured 
 
 ### Archive behaviour
 
-- Archived accounts: hidden from home list + filter chips
-- Still contribute to net worth graph forever (last known value carried forward flat)
+- Archived accounts: hidden from home account list; still show in filter chips (their type chip can still be selected)
+- Still contribute to net worth graph and net worth number (last known value carried forward flat indefinitely)
+- `buildHomeSeries`, `currentNetWorth`, `filteredNetWorth` all receive ALL accounts (including archived); filtering by `isArchived` is NOT done inside these functions
+- `activeAccounts` (non-archived) used only for account list display and `isEmpty` check
 - Unarchive from Settings > Archived Accounts
 
 ### Graph interpolation
@@ -99,9 +101,11 @@ Account type cards and onboarding chips use **outlined Ionicons** on a coloured 
 
 ### Home screen
 
-- Big number at top = total net worth (or filtered total when type chip active)
-- All 6 filter chips always visible; default "All"
-- Accounts sorted by absolute value descending
+- Big number at top = total net worth (or filtered total when type chips active)
+- All 6 filter chips always visible; default "All"; **multi-select** — tap multiple types to combine; tap "All" to reset
+- Filter state: `Set<AccountType>` (empty = All); header label = "Net Worth" / single type label / "Filtered"
+- Graph color = type color when exactly one type selected, else `HOME_GRAPH_COLOR`
+- Accounts sorted by absolute value descending (non-archived only)
 
 ### Currency
 
@@ -337,7 +341,14 @@ purchase_price, original_deposit, is_shared, ownership_pct
 - Touch scrub via `PanResponder` → nearest point → `onScrub({ts, value, value2, x, y})`
 - Release → `onScrub(null)` clears crosshair
 - Y-axis auto-fits actual data range (8% padding each side); no `showZero` prop
-- Props: `series`, `series2`, `series2Style`, `series2Color`, `color`, `fillGradient`, `onScrub`, `showAxis`, `showCrosshair`, `yDomainFrom`
+- Props: `series`, `series2`, `series2Style`, `series2Color`, `color`, `fillGradient`, `onScrub`, `showAxis`, `showCrosshair`, `yDomainFrom`, `currencySymbol`
+
+### Axis labels (when `showAxis=true`)
+
+- **Y-axis**: 3–4 nice ticks (`[1,2,5,10]` step pattern) from data range; abbreviated format (`£50k`, `£1.5M`, `-£10k`); rendered as absolute `Text` (Geist_400Regular, 10pt) left of the plot area; padLeft expands to 52px to make room
+- **X-axis**: Jan 1 tick marks per year within series range; year label (`2024`, `2025`) as absolute `Text` below axis; padBottom expands to 28px; sub-year ranges show no labels (no Jan 1 boundary exists)
+- **Gridlines**: subtle horizontal lines at each y-tick position drawn in Skia (behind fills)
+- Callers must pass `currencySymbol={currency.symbol}` from settings store
 
 ---
 
@@ -421,6 +432,13 @@ Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct key
 - `settingsStore`: added `hasSeenReviewPrompt: boolean` + `setHasSeenReviewPrompt` ✅
 - `index.tsx`: imports + store hooks wired (`StoreReview`, `hasSeenReviewPrompt`, `setHasSeenReviewPrompt`) ✅
 - **Pending**: review card UI in `index.tsx` — "Enjoying Worthi?" card when `entries.length >= 1 && !hasSeenReviewPrompt`; "Yes, love it!" → `StoreReview.requestReview()` + mark seen + track `review_prompted`; "Not yet" → mark seen + track `review_dismissed`
+
+### Post-Session Fixes ✅
+
+- **Privacy policy**: removed "Last updated: May 2025" date from `privacy.tsx`
+- **Currency selector**: `currencySymbol` style `width` increased `24 → 36` in `settings.tsx` to prevent multi-char symbols (A$, CA$) stacking vertically
+- **Filter chips**: single-select → **multi-select** (`Set<AccountType>`); "All" clears set; tapping active type deselects it; `networth.ts` functions updated to accept `AccountType[]`
+- **Archive graph fix**: archived accounts were excluded from graph + net worth because `activeAccounts` was passed to `buildHomeSeries`/`currentNetWorth`; fixed to pass all `accounts` — archived history now correctly appears in graph with step-function carry-forward
 
 ---
 

@@ -18,21 +18,19 @@ export function rangeStartDate(range: RangeKey, allAccounts: Account[], entriesB
   }
 }
 
-// Current net worth — sum of all non-archived account contributions at now.
+// Current net worth — sum of all account contributions at now (includes archived, last value carried forward).
 export function currentNetWorth(
   accounts: Account[],
   entriesByAccount: Map<string, Entry[]>
 ): number {
   const now = Date.now();
-  return accounts
-    .filter((a) => !a.isArchived)
-    .reduce((sum, account) => {
-      const entries = entriesByAccount.get(account.id) ?? [];
-      return sum + interpolateContribution(account, entries, now);
-    }, 0);
+  return accounts.reduce((sum, account) => {
+    const entries = entriesByAccount.get(account.id) ?? [];
+    return sum + interpolateContribution(account, entries, now);
+  }, 0);
 }
 
-// Filtered net worth — sum for accounts matching one or more types (empty = all).
+// Filtered net worth — sum for accounts matching one or more types (empty = all). Includes archived.
 export function filteredNetWorth(
   accounts: Account[],
   entriesByAccount: Map<string, Entry[]>,
@@ -41,7 +39,7 @@ export function filteredNetWorth(
   const now = Date.now();
   const typeSet = new Set(types);
   return accounts
-    .filter((a) => !a.isArchived && (typeSet.size === 0 || typeSet.has(a.type)))
+    .filter((a) => typeSet.size === 0 || typeSet.has(a.type))
     .reduce((sum, account) => {
       const entries = entriesByAccount.get(account.id) ?? [];
       return sum + interpolateContribution(account, entries, now);

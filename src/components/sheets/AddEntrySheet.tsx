@@ -5,7 +5,8 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { track } from '@/lib/analytics';
 import {
@@ -22,6 +23,7 @@ import { Spacing } from '@/constants/theme';
 import Field from '@/components/common/Field';
 import DateSelector from '@/components/common/DateSelector';
 import { todayMs } from '@/lib/interpolate';
+import { formatDate } from '@/lib/formatting';
 import type { Entry } from '@/types';
 
 export interface AddEntrySheetHandle {
@@ -40,6 +42,7 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
   const accounts = useAccountStore((s) => s.accounts);
   const addEntry = useAccountStore((s) => s.addEntry);
   const updateEntry = useAccountStore((s) => s.updateEntry);
+  const deleteEntry = useAccountStore((s) => s.deleteEntry);
 
   const [accountId, setAccountId] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<Entry | null>(null);
@@ -134,6 +137,28 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
     resetForm();
   }
 
+  function handleDelete() {
+    if (!editEntry || !account) return;
+    Alert.alert(
+      'Delete Entry',
+      `Delete entry from ${formatDate(editEntry.date)}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            track('entry_deleted', { account_type: account.type });
+            deleteEntry(editEntry.id);
+            sheetRef.current?.dismiss();
+            resetForm();
+          },
+        },
+      ]
+    );
+  }
+
   return (
     <BottomSheetModal
       ref={sheetRef}
@@ -159,7 +184,7 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
               { backgroundColor: `${typeConfig.color}18`, borderColor: `${typeConfig.color}40` },
             ]}
           >
-            <Text style={styles.accountGlyph}>{typeConfig.glyph}</Text>
+            <Ionicons name={typeConfig.glyph as any} size={15} color={typeConfig.color} />
             <Text style={[styles.accountName, { color: typeConfig.color }]}>
               {account.name}
             </Text>
@@ -228,6 +253,15 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
               {isEditing ? 'Update Entry' : 'Add Entry'}
             </Text>
           </Pressable>
+
+          {isEditing && (
+            <Pressable
+              onPress={handleDelete}
+              style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.6 }]}
+            >
+              <Text style={[styles.deleteBtnText, { color: theme.danger }]}>Delete entry</Text>
+            </Pressable>
+          )}
         </View>
       </BottomSheetScrollView>
     </BottomSheetModal>
@@ -258,7 +292,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: Spacing.md,
   },
-  accountGlyph: { fontSize: 15 },
+
   accountName: {
     fontSize: 13,
     fontWeight: '600',
@@ -278,5 +312,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'Geist_600SemiBold',
+  },
+  deleteBtn: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  deleteBtnText: {
+    fontSize: 15,
+    fontFamily: 'Geist_500Medium',
   },
 });

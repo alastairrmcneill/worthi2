@@ -55,7 +55,6 @@ export default function AccountDetailScreen() {
   const allEntries = useAccountStore((s) => s.entries);
   const updateAccount = useAccountStore((s) => s.updateAccount);
   const deleteAccount = useAccountStore((s) => s.deleteAccount);
-  const deleteEntry = useAccountStore((s) => s.deleteEntry);
 
   const addEntryRef = useRef<AddEntrySheetHandle>(null);
   const [range, setRange] = useState<RangeKey>('All');
@@ -171,21 +170,6 @@ export default function AccountDetailScreen() {
     );
   };
 
-  const handleDeleteEntry = (entry: Entry) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.alert('Delete Entry', `Delete entry from ${formatDate(entry.date)}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          track('entry_deleted', { account_type: account.type });
-          deleteEntry(entry.id);
-        },
-      },
-    ]);
-  };
 
   const showMenu = () => {
     const archiveLabel = account.isArchived ? 'Unarchive' : 'Archive';
@@ -363,7 +347,6 @@ export default function AccountDetailScreen() {
                   onEdit={() =>
                     addEntryRef.current?.presentForEdit(account.id, entry)
                   }
-                  onDelete={() => handleDeleteEntry(entry)}
                 />
               ))}
             </View>
@@ -510,7 +493,6 @@ function HistoryRow({
   theme,
   isLast,
   onEdit,
-  onDelete,
 }: {
   entry: Entry;
   account: Account;
@@ -518,7 +500,6 @@ function HistoryRow({
   theme: Theme;
   isLast: boolean;
   onEdit: () => void;
-  onDelete: () => void;
 }) {
   let primaryValue: string;
   let primaryColor = theme.fg;
@@ -542,31 +523,20 @@ function HistoryRow({
   }
 
   return (
-    <View style={[histStyles.row, !isLast && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+    <Pressable
+      onPress={onEdit}
+      style={({ pressed }) => [
+        histStyles.row,
+        !isLast && { borderBottomWidth: 1, borderBottomColor: theme.border },
+        pressed && { opacity: 0.7 },
+      ]}
+    >
       <View style={histStyles.left}>
         <Text style={[histStyles.date, { color: theme.fg }]}>{formatDate(entry.date)}</Text>
         {secondary && <Text style={[histStyles.secondary, { color: theme.fg3 }]}>{secondary}</Text>}
       </View>
-      <View style={histStyles.right}>
-        <Text style={[histStyles.value, { color: primaryColor }]}>{primaryValue}</Text>
-        <View style={histStyles.actions}>
-          <Pressable
-            onPress={onEdit}
-            hitSlop={8}
-            style={({ pressed }) => [histStyles.actionBtn, pressed && { opacity: 0.5 }]}
-          >
-            <Ionicons name="pencil-outline" size={15} color={theme.fg3} />
-          </Pressable>
-          <Pressable
-            onPress={onDelete}
-            hitSlop={8}
-            style={({ pressed }) => [histStyles.actionBtn, pressed && { opacity: 0.5 }]}
-          >
-            <Ionicons name="trash-outline" size={15} color={theme.danger} />
-          </Pressable>
-        </View>
-      </View>
-    </View>
+      <Text style={[histStyles.value, { color: primaryColor }]}>{primaryValue}</Text>
+    </Pressable>
   );
 }
 
@@ -788,21 +758,10 @@ const histStyles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Geist_400Regular',
   },
-  right: {
-    alignItems: 'flex-end',
-    gap: 6,
-  },
   value: {
     fontSize: 15,
     fontWeight: '600',
     fontFamily: 'GeistMono_600SemiBold',
     letterSpacing: -0.2,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionBtn: {
-    padding: 2,
   },
 });
