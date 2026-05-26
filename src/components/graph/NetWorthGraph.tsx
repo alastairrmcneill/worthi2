@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useCallback } from 'react';
-import { View, PanResponder } from 'react-native';
+import { View, Text, PanResponder } from 'react-native';
 import {
   Canvas,
   Path,
@@ -38,7 +38,11 @@ interface Props {
   onScrub?: (info: ScrubInfo | null) => void;
   thick?: number;
   yDomainFrom?: [number, number];
+  currencySymbol?: string;
 }
+
+const LABEL_PAD_LEFT = 52;
+const LABEL_PAD_BOTTOM = 28;
 
 // Fritsch-Carlson monotonic cubic Hermite spline — no overshoot, no values that never existed
 function monotonicSplinePath(pts: [number, number][]): string {
@@ -49,20 +53,17 @@ function monotonicSplinePath(pts: [number, number][]): string {
     return `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)} L ${pts[1][0].toFixed(2)} ${pts[1][1].toFixed(2)}`;
   }
 
-  // chord slopes
   const d: number[] = [];
   for (let i = 0; i < n - 1; i++) {
     const dx = pts[i + 1][0] - pts[i][0];
     d.push(dx === 0 ? 0 : (pts[i + 1][1] - pts[i][1]) / dx);
   }
 
-  // initial tangents
   const m: number[] = new Array(n);
   m[0] = d[0];
   m[n - 1] = d[n - 2];
   for (let i = 1; i < n - 1; i++) m[i] = (d[i - 1] + d[i]) / 2;
 
-  // monotonicity conditions
   for (let i = 0; i < n - 1; i++) {
     if (Math.abs(d[i]) < 1e-10) {
       m[i] = 0;
@@ -97,6 +98,37 @@ function hexAlpha(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+function niceYTicks(dataMin: number, dataMax: number, targetCount = 4): number[] {
+  if (dataMin === dataMax) return [dataMin];
+  const range = dataMax - dataMin;
+  const rawStep = range / Math.max(1, targetCount - 1);
+  const mag = Math.pow(10, Math.floor(Math.log10(Math.abs(rawStep) || 1)));
+  const normalized = rawStep / mag;
+  let niceStep: number;
+  if (normalized <= 1) niceStep = 1;
+  else if (normalized <= 2) niceStep = 2;
+  else if (normalized <= 5) niceStep = 5;
+  else niceStep = 10;
+  const step = niceStep * mag;
+  const start = Math.ceil(dataMin / step) * step;
+  const ticks: number[] = [];
+  for (let v = start; v <= dataMax + step * 0.001; v += step) {
+    ticks.push(Math.round(v * 1e8) / 1e8);
+  }
+  return ticks;
+}
+
+function fmtAxisVal(v: number, sym: string): string {
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1_000_000) {
+    const m = abs / 1_000_000;
+    return `${sign}${sym}${Number.isInteger(m) ? m : m.toFixed(1)}M`;
+  }
+  if (abs >= 1_000) return `${sign}${sym}${Math.round(abs / 1_000)}k`;
+  return `${sign}${sym}${Math.round(abs)}`;
+}
+
 export default function NetWorthGraph({
   series,
   series2,
@@ -114,14 +146,22 @@ export default function NetWorthGraph({
   onScrub,
   thick = 2.5,
   yDomainFrom,
+  currencySymbol = '',
 }: Props) {
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState<{ x: number; y: number; y2: number | null } | null>(null);
 
-  // Computed pixel positions for every series point
-  const { pts, pts2 } = useMemo(() => {
+  const effectivePadLeft = showAxis ? LABEL_PAD_LEFT : padX;
+  const effectivePadBottom = showAxis ? LABEL_PAD_BOTTOM : padBottom;
+
+  const { pts, pts2, yearTicks, yTicks } = useMemo(() => {
     if (width === 0 || series.length === 0) {
-      return { pts: [] as [number, number][], pts2: null };
+      return {
+        pts: [] as [number, number][],
+        pts2: null,
+        yearTicks: [] as { year: number; x: number }[],
+        yTicks: [] as { value: number; y: number; label: string }[],
+      };
     }
 
     const allVals = [
@@ -141,52 +181,83 @@ export default function NetWorthGraph({
     const tMax = series[series.length - 1].ts;
     const tSpan = Math.max(1, tMax - tMin);
 
-    const xOf = (ts: number) => padX + ((ts - tMin) / tSpan) * (width - padX * 2);
+    const xOf = (ts: number) =>
+      effectivePadLeft + ((ts - tMin) / tSpan) * (width - effectivePadLeft - padX);
     const yOf = (v: number) =>
-      padTop + (1 - (v - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
+      padTop + (1 - (v - yMin) / (yMax - yMin)) * (height - padTop - effectivePadBottom);
 
     const pts = series.map((p) => [xOf(p.ts), yOf(p.value)] as [number, number]);
     const pts2 = series2
       ? series2.map((p) => [xOf(p.ts), yOf(p.value)] as [number, number])
       : null;
 
-    return { pts, pts2 };
-  }, [series, series2, width, height, padTop, padBottom, padX, yDomainFrom]);
+    // Year boundary ticks (Jan 1 of each year within the series range)
+    const yearTicks: { year: number; x: number }[] = [];
+    if (showAxis && series.length > 1) {
+      const firstYear = new Date(tMin).getFullYear();
+      const lastYear = new Date(tMax).getFullYear();
+      for (let y = firstYear + 1; y <= lastYear; y++) {
+        const ts = new Date(y, 0, 1).getTime();
+        if (ts > tMin && ts <= tMax) {
+          yearTicks.push({ year: y, x: xOf(ts) });
+        }
+      }
+    }
 
-  // Build Skia paths from computed pixel coords
-  const { linePath, areaPath, line2Path, axisPath } = useMemo(() => {
+    // Y-axis nice ticks
+    const rawTicks = showAxis ? niceYTicks(minV, maxV, 4) : [];
+    const yTicks = rawTicks.map((v) => ({
+      value: v,
+      y: yOf(v),
+      label: fmtAxisVal(v, currencySymbol),
+    }));
+
+    return { pts, pts2, yearTicks, yTicks };
+  }, [series, series2, width, height, padTop, padX, effectivePadLeft, effectivePadBottom, yDomainFrom, showAxis, currencySymbol]);
+
+  const { linePath, areaPath, line2Path, axisPath, gridPath } = useMemo(() => {
     if (pts.length === 0) {
-      // Flat axis line when no data
       const ap = Skia.Path.Make();
-      ap.moveTo(padX, height - padBottom);
-      ap.lineTo(width > 0 ? width - padX : 0, height - padBottom);
-      return { linePath: null, areaPath: null, line2Path: null, axisPath: ap };
+      ap.moveTo(effectivePadLeft, height - effectivePadBottom);
+      ap.lineTo(width > 0 ? width - padX : 0, height - effectivePadBottom);
+      return { linePath: null, areaPath: null, line2Path: null, axisPath: ap, gridPath: null };
     }
 
     const svgLine = monotonicSplinePath(pts);
-    const svgArea = `${svgLine} L ${pts[pts.length - 1][0].toFixed(2)} ${(height - padBottom).toFixed(2)} L ${pts[0][0].toFixed(2)} ${(height - padBottom).toFixed(2)} Z`;
+    const svgArea = `${svgLine} L ${pts[pts.length - 1][0].toFixed(2)} ${(height - effectivePadBottom).toFixed(2)} L ${pts[0][0].toFixed(2)} ${(height - effectivePadBottom).toFixed(2)} Z`;
 
     const linePath = Skia.Path.MakeFromSVGString(svgLine);
     const areaPath = Skia.Path.MakeFromSVGString(svgArea);
     const line2Path = pts2 ? Skia.Path.MakeFromSVGString(monotonicSplinePath(pts2)) : null;
 
     const axisPath = Skia.Path.Make();
-    axisPath.moveTo(padX, height - padBottom);
-    axisPath.lineTo(width - padX, height - padBottom);
+    axisPath.moveTo(effectivePadLeft, height - effectivePadBottom);
+    axisPath.lineTo(width - padX, height - effectivePadBottom);
 
-    return { linePath, areaPath, line2Path, axisPath };
-  }, [pts, pts2, width, height, padBottom, padX]);
+    // Year tick marks (4px below axis line)
+    for (const tick of yearTicks) {
+      axisPath.moveTo(tick.x, height - effectivePadBottom);
+      axisPath.lineTo(tick.x, height - effectivePadBottom + 4);
+    }
 
-  // Crosshair path (recomputed when hover changes)
+    // Horizontal gridlines at y-tick positions
+    const gridPath = Skia.Path.Make();
+    for (const tick of yTicks) {
+      gridPath.moveTo(effectivePadLeft, tick.y);
+      gridPath.lineTo(width - padX, tick.y);
+    }
+
+    return { linePath, areaPath, line2Path, axisPath, gridPath };
+  }, [pts, pts2, width, height, effectivePadBottom, effectivePadLeft, padX, yearTicks, yTicks]);
+
   const crosshairPath = useMemo(() => {
     if (!hover) return null;
     const p = Skia.Path.Make();
     p.moveTo(hover.x, padTop);
-    p.lineTo(hover.x, height - padBottom);
+    p.lineTo(hover.x, height - effectivePadBottom);
     return p;
-  }, [hover, padTop, height, padBottom]);
+  }, [hover, padTop, height, effectivePadBottom]);
 
-  // Use refs so PanResponder (created once) always calls the latest versions
   const handleScrubRef = useRef<(x: number) => void>(() => {});
   const clearScrubRef = useRef<() => void>(() => {});
 
@@ -230,7 +301,9 @@ export default function NetWorthGraph({
   ).current;
 
   const gradientTopColor = hexAlpha(color, isDark ? 0.45 : 0.32);
-  const axisColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const axisColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+  const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+  const labelColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
   const bgColor = isDark ? '#0B0B12' : '#FFFFFF';
   const sec2Color = series2Color ?? color;
 
@@ -241,76 +314,131 @@ export default function NetWorthGraph({
       style={{ width: '100%', height }}
     >
       {width > 0 && (
-        <Canvas style={{ width, height }}>
-          {/* Axis */}
-          {showAxis && axisPath && (
-            <Path path={axisPath} style="stroke" strokeWidth={1} color={axisColor} />
-          )}
+        <>
+          <Canvas style={{ width, height }}>
+            {/* Horizontal gridlines */}
+            {showAxis && gridPath && (
+              <Path path={gridPath} style="stroke" strokeWidth={1} color={gridColor} />
+            )}
 
-          {/* Area fill */}
-          {fillGradient && areaPath && (
-            <Path path={areaPath} style="fill">
-              <LinearGradient
-                start={vec(0, padTop)}
-                end={vec(0, height - padBottom)}
-                colors={[gradientTopColor, 'transparent']}
-              />
-            </Path>
-          )}
+            {/* Axis line + year ticks */}
+            {showAxis && axisPath && (
+              <Path path={axisPath} style="stroke" strokeWidth={1} color={axisColor} />
+            )}
 
-          {/* Second line (behind primary) */}
-          {line2Path && (
-            <Path
-              path={line2Path}
-              style="stroke"
-              strokeWidth={thick - 0.5}
-              color={sec2Color}
-              opacity={series2Style === 'dashed' ? 0.85 : 1}
-            >
-              {series2Style === 'dashed' && (
-                <DashPathEffect intervals={[4, 4]} phase={0} />
-              )}
-            </Path>
-          )}
-
-          {/* Primary line */}
-          {linePath && (
-            <Path
-              path={linePath}
-              style="stroke"
-              strokeWidth={thick}
-              strokeJoin="round"
-              strokeCap="round"
-              color={color}
-            />
-          )}
-
-          {/* Crosshair */}
-          {showCrosshair && hover && crosshairPath && (
-            <Group>
-              <Path
-                path={crosshairPath}
-                style="stroke"
-                strokeWidth={1}
-                color={color}
-                opacity={0.4}
-              >
-                <DashPathEffect intervals={[3, 3]} phase={0} />
+            {/* Area fill */}
+            {fillGradient && areaPath && (
+              <Path path={areaPath} style="fill">
+                <LinearGradient
+                  start={vec(0, padTop)}
+                  end={vec(0, height - effectivePadBottom)}
+                  colors={[gradientTopColor, 'transparent']}
+                />
               </Path>
-              {/* Background circle (hides line behind dot) */}
-              <Circle cx={hover.x} cy={hover.y} r={5} color={bgColor} />
-              {/* Coloured ring */}
-              <Circle
-                cx={hover.x}
-                cy={hover.y}
-                r={5}
+            )}
+
+            {/* Second line (behind primary) */}
+            {line2Path && (
+              <Path
+                path={line2Path}
                 style="stroke"
-                strokeWidth={2}
+                strokeWidth={thick - 0.5}
+                color={sec2Color}
+                opacity={series2Style === 'dashed' ? 0.85 : 1}
+              >
+                {series2Style === 'dashed' && (
+                  <DashPathEffect intervals={[4, 4]} phase={0} />
+                )}
+              </Path>
+            )}
+
+            {/* Primary line */}
+            {linePath && (
+              <Path
+                path={linePath}
+                style="stroke"
+                strokeWidth={thick}
+                strokeJoin="round"
+                strokeCap="round"
                 color={color}
               />
-            </Group>
-          )}
-        </Canvas>
+            )}
+
+            {/* Crosshair */}
+            {showCrosshair && hover && crosshairPath && (
+              <Group>
+                <Path
+                  path={crosshairPath}
+                  style="stroke"
+                  strokeWidth={1}
+                  color={color}
+                  opacity={0.4}
+                >
+                  <DashPathEffect intervals={[3, 3]} phase={0} />
+                </Path>
+                <Circle cx={hover.x} cy={hover.y} r={5} color={bgColor} />
+                <Circle
+                  cx={hover.x}
+                  cy={hover.y}
+                  r={5}
+                  style="stroke"
+                  strokeWidth={2}
+                  color={color}
+                />
+              </Group>
+            )}
+          </Canvas>
+
+          {/* Y-axis value labels */}
+          {showAxis && yTicks.map((tick) => (
+            <View
+              key={tick.value}
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: 0,
+                width: LABEL_PAD_LEFT - 6,
+                top: tick.y - 8,
+              }}
+            >
+              <Text
+                style={{
+                  color: labelColor,
+                  fontSize: 10,
+                  textAlign: 'right',
+                  fontFamily: 'Geist_400Regular',
+                }}
+              >
+                {tick.label}
+              </Text>
+            </View>
+          ))}
+
+          {/* X-axis year labels */}
+          {showAxis && yearTicks.map((tick) => (
+            <View
+              key={tick.year}
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                bottom: 2,
+                left: tick.x - 20,
+                width: 40,
+              }}
+            >
+              <Text
+                style={{
+                  color: labelColor,
+                  fontSize: 10,
+                  textAlign: 'center',
+                  fontFamily: 'Geist_400Regular',
+                }}
+              >
+                {tick.year}
+              </Text>
+            </View>
+          ))}
+        </>
       )}
     </View>
   );

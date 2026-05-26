@@ -32,15 +32,16 @@ export function currentNetWorth(
     }, 0);
 }
 
-// Filtered net worth — sum for accounts matching a type filter.
+// Filtered net worth — sum for accounts matching one or more types (empty = all).
 export function filteredNetWorth(
   accounts: Account[],
   entriesByAccount: Map<string, Entry[]>,
-  filter: AccountType
+  types: AccountType[]
 ): number {
   const now = Date.now();
+  const typeSet = new Set(types);
   return accounts
-    .filter((a) => !a.isArchived && a.type === filter)
+    .filter((a) => !a.isArchived && (typeSet.size === 0 || typeSet.has(a.type)))
     .reduce((sum, account) => {
       const entries = entriesByAccount.get(account.id) ?? [];
       return sum + interpolateContribution(account, entries, now);
@@ -53,17 +54,16 @@ export function accountCurrentValue(account: Account, entries: Entry[]): number 
   return interpolateContribution(account, entries, now);
 }
 
-// Build series for home graph — all accounts combined or filtered by type.
+// Build series for home graph — all accounts combined or filtered by types (empty = all).
 export function buildHomeSeries(
   accounts: Account[],
   entriesByAccount: Map<string, Entry[]>,
-  filter: AccountType | 'all',
+  types: AccountType[],
   startDate: number,
   endDate: number
 ): SeriesPoint[] {
-  const filtered = accounts.filter(
-    (a) => filter === 'all' || a.type === filter
-  );
+  const typeSet = new Set(types);
+  const filtered = typeSet.size === 0 ? accounts : accounts.filter((a) => typeSet.has(a.type));
   return buildTotalSeries(filtered, entriesByAccount, startDate, endDate);
 }
 

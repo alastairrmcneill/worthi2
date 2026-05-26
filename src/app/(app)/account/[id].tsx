@@ -281,6 +281,7 @@ export default function AccountDetailScreen() {
             onScrub={setScrub}
             showAxis
             showCrosshair
+            currencySymbol={currency.symbol}
           />
         </View>
 
@@ -761,7 +762,7 @@ const statStyles = StyleSheet.create({
   value: {
     fontSize: 17,
     fontWeight: '600',
-    fontFamily: 'Geist_600SemiBold',
+    fontFamily: 'GeistMono_600SemiBold',
     letterSpacing: -0.3,
   },
 });
@@ -794,7 +795,7 @@ const histStyles = StyleSheet.create({
   value: {
     fontSize: 15,
     fontWeight: '600',
-    fontFamily: 'Geist_600SemiBold',
+    fontFamily: 'GeistMono_600SemiBold',
     letterSpacing: -0.2,
   },
   actions: {

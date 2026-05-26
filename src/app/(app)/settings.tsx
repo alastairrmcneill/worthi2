@@ -407,8 +407,8 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 18,
     fontWeight: '600',
-    fontFamily: 'Geist_600SemiBold',
-    width: 24,
+    fontFamily: 'GeistMono_600SemiBold',
+    width: 36,
     textAlign: 'center',
   },
   currencyLabel: {

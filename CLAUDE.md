@@ -9,6 +9,7 @@ Personal net worth tracking app for iOS + Android (React Native / Expo). Focus: 
 **Phase:** Feature-complete. Sessions 1–9, Analytics, Session 10 (Graph & Icons), Session 11 (Date Picker & Settings) done. Session 12 (Review Prompt) store wired, UI card pending.
 
 **Design reference exists:** `design-reference/` contains:
+
 - `vibrant.jsx` — full UI prototype (home, detail, onboarding, settings screens)
 - `vibrant-sheets.jsx` — bottom sheet flows (add account, add entry)
 - `graph.jsx` — custom Catmull-Rom SVG graph with scrub interaction
@@ -18,19 +19,19 @@ Personal net worth tracking app for iOS + Android (React Native / Expo). Focus: 
 
 ## Tech Stack
 
-| Concern | Decision |
-|---|---|
-| Framework | Expo managed (SDK 56) |
-| Language | TypeScript strict |
-| Navigation | Expo Router |
-| State | Zustand |
-| Graph | React Native Skia (`@shopify/react-native-skia`) |
-| Bottom sheets | `@gorhom/bottom-sheet` v5 |
-| Storage | `expo-sqlite` (local-first; cloud sync deferred) |
-| Font | Geist (bundled via `expo-font`) |
-| Theme | Dark (Dusk) + Light (Linen), follows system, user can override in Settings |
-| Analytics | `mixpanel-react-native` (anonymous, no PII) |
-| Tests | None for now |
+| Concern       | Decision                                                                   |
+| ------------- | -------------------------------------------------------------------------- |
+| Framework     | Expo managed (SDK 56)                                                      |
+| Language      | TypeScript strict                                                          |
+| Navigation    | Expo Router                                                                |
+| State         | Zustand                                                                    |
+| Graph         | React Native Skia (`@shopify/react-native-skia`)                           |
+| Bottom sheets | `@gorhom/bottom-sheet` v5                                                  |
+| Storage       | `expo-sqlite` (local-first; cloud sync deferred)                           |
+| Font          | Geist (bundled via `expo-font`)                                            |
+| Theme         | Dark (Dusk) + Light (Linen), follows system, user can override in Settings |
+| Analytics     | `mixpanel-react-native` (anonymous, no PII)                                |
+| Tests         | None for now                                                               |
 
 ### All dependencies
 
@@ -50,14 +51,14 @@ zustand mixpanel-react-native
 
 ## Account Types
 
-| Type | Key | Color | Behaviour |
-|---|---|---|---|
-| Current Account | `current` | `#3B82F6` blue | User enters current balance |
-| Credit Card | `credit_card` | `#F43F5E` red | User enters amount owed → **stored negative** |
-| Investment | `investment` | `#10B981` green | Deposited (cumulative running total) + current value; shows % return |
-| Loan | `loan` | `#F97316` orange | User enters amount owed → **stored negative** |
-| Pension | `pension` | `#8B5CF6` purple | Current value only; no return % |
-| House | `house` | `#14B8A6` teal | Property value + mortgage balance; can be shared (see below) |
+| Type            | Key           | Color            | Behaviour                                                            |
+| --------------- | ------------- | ---------------- | -------------------------------------------------------------------- |
+| Current Account | `current`     | `#3B82F6` blue   | User enters current balance                                          |
+| Credit Card     | `credit_card` | `#F43F5E` red    | User enters amount owed → **stored negative**                        |
+| Investment      | `investment`  | `#10B981` green  | Deposited (cumulative running total) + current value; shows % return |
+| Loan            | `loan`        | `#F97316` orange | User enters amount owed → **stored negative**                        |
+| Pension         | `pension`     | `#8B5CF6` purple | Current value only; no return %                                      |
+| House           | `house`       | `#14B8A6` teal   | Property value + mortgage balance; can be shared (see below)         |
 
 Colors used consistently: type chips, account dots, graph lines, filter chips.
 
@@ -68,12 +69,14 @@ Account type cards and onboarding chips use **outlined Ionicons** on a coloured 
 ## Key Business Rules
 
 ### Values & signs
+
 - Credit card / loan: user types positive → stored as negative → displayed `-£1,200` in red
 - House net worth contribution = `equity × (ownershipPct / 100)` where `equity = value - mortgageBalance`
 - Investment return = `(value - deposited) / deposited * 100`
 - Pension: value only, no return displayed
 
 ### Shared house
+
 - House accounts have `is_shared` toggle + `ownership_pct` (1–99, default 50; non-shared stored as 100)
 - Set on creation; editable via 3-dot menu → Rename
 - Net worth uses user's equity share only
@@ -81,11 +84,13 @@ Account type cards and onboarding chips use **outlined Ionicons** on a coloured 
 - Detail graph y-axis = user's equity share (scaled)
 
 ### Archive behaviour
+
 - Archived accounts: hidden from home list + filter chips
 - Still contribute to net worth graph forever (last known value carried forward flat)
 - Unarchive from Settings > Archived Accounts
 
 ### Graph interpolation
+
 - **Step-function carry-forward**: last known entry on or before the date; holds flat until next entry
 - Before first entry: value = 0
 - After last entry: carry last value forward indefinitely (flat)
@@ -93,11 +98,13 @@ Account type cards and onboarding chips use **outlined Ionicons** on a coloured 
 - Sample points: daily for ranges ≤ 31 days; 1st of each month + today for longer ranges
 
 ### Home screen
+
 - Big number at top = total net worth (or filtered total when type chip active)
 - All 6 filter chips always visible; default "All"
 - Accounts sorted by absolute value descending
 
 ### Currency
+
 - User selects from settings (single row → BottomSheetModal); change is relabel only (no conversion)
 - Auto-detected from device locale on first launch
 - Display format in settings row: `£ GBP`
@@ -202,33 +209,34 @@ src/
 - `track(event, properties)` — fire-and-forget, never throws
 
 **Token config:**
+
 - Token read from `process.env.EXPO_PUBLIC_MIXPANEL_TOKEN`
 - Local dev: set in `.env` (gitignored; see `.env.example`)
 - EAS Build: add as project secret — `eas secret:create --scope project --name EXPO_PUBLIC_MIXPANEL_TOKEN --value <token>`
 
 **Events tracked:**
 
-| Event | Properties | Where |
-|---|---|---|
-| `account_created` | `account_type` | AddAccountSheet on save |
-| `entry_added` | `account_type` | AddEntrySheet on save |
-| `entry_edited` | `account_type` | AddEntrySheet on update |
-| `entry_deleted` | `account_type` | account/[id].tsx delete confirm |
-| `account_archived` | `account_type` | account/[id].tsx 3-dot menu |
-| `account_unarchived` | `account_type` | account/[id].tsx + settings |
-| `account_deleted` | `account_type` | account/[id].tsx delete confirm |
-| `home_filter_changed` | `filter` | index.tsx filter chips |
-| `home_range_changed` | `range` | index.tsx range picker |
-| `detail_range_changed` | `range`, `account_type` | account/[id].tsx range picker |
-| `onboarding_completed` | — | onboarding after account saved |
-| `onboarding_skipped` | — | onboarding skip / "Skip for now" |
-| `currency_changed` | `currency_code` | settings currency sheet |
-| `csv_imported` | `accounts_count`, `entries_count`, `skipped_count` | csvImport.ts |
-| `csv_template_downloaded` | — | settings download button |
-| `theme_changed` | `theme` | settings appearance section |
-| `rate_app_tapped` | — | settings Rate App row |
-| `review_prompted` | — | home review card "Yes" |
-| `review_dismissed` | — | home review card "Not yet" |
+| Event                     | Properties                                         | Where                            |
+| ------------------------- | -------------------------------------------------- | -------------------------------- |
+| `account_created`         | `account_type`                                     | AddAccountSheet on save          |
+| `entry_added`             | `account_type`                                     | AddEntrySheet on save            |
+| `entry_edited`            | `account_type`                                     | AddEntrySheet on update          |
+| `entry_deleted`           | `account_type`                                     | account/[id].tsx delete confirm  |
+| `account_archived`        | `account_type`                                     | account/[id].tsx 3-dot menu      |
+| `account_unarchived`      | `account_type`                                     | account/[id].tsx + settings      |
+| `account_deleted`         | `account_type`                                     | account/[id].tsx delete confirm  |
+| `home_filter_changed`     | `filter`                                           | index.tsx filter chips           |
+| `home_range_changed`      | `range`                                            | index.tsx range picker           |
+| `detail_range_changed`    | `range`, `account_type`                            | account/[id].tsx range picker    |
+| `onboarding_completed`    | —                                                  | onboarding after account saved   |
+| `onboarding_skipped`      | —                                                  | onboarding skip / "Skip for now" |
+| `currency_changed`        | `currency_code`                                    | settings currency sheet          |
+| `csv_imported`            | `accounts_count`, `entries_count`, `skipped_count` | csvImport.ts                     |
+| `csv_template_downloaded` | —                                                  | settings download button         |
+| `theme_changed`           | `theme`                                            | settings appearance section      |
+| `rate_app_tapped`         | —                                                  | settings Rate App row            |
+| `review_prompted`         | —                                                  | home review card "Yes"           |
+| `review_dismissed`        | —                                                  | home review card "Not yet"       |
 
 No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonymous `distinct_id` automatically.
 
@@ -237,6 +245,7 @@ No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonym
 ## Screens
 
 ### Home
+
 - Top bar: "Worthi" left, settings icon right
 - Large net worth number (updates during graph scrub)
 - `NetWorthGraph` + `RangePicker` (1M/3M/6M/1Y/All)
@@ -247,6 +256,7 @@ No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonym
 - Review prompt card (pending): shows when `entries.length >= 1 && !hasSeenReviewPrompt`
 
 ### Account Detail
+
 - Header: back, TypePill + name, 3-dot menu (Archive / Rename / Delete)
 - Large current value (equity for house; portfolio value for investment)
 - `NetWorthGraph`: investment = value solid + deposited dashed; house = property value solid + equity dashed
@@ -262,6 +272,7 @@ No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonym
 - Rename modal: TextInput modal, cross-platform
 
 ### Settings
+
 - **Appearance**: System / Light / Dark radio list (checkmark on active); calls `setThemeOverride`
 - **Currency**: single tappable row showing `£ GBP` → opens `BottomSheetModal` with currency list
 - **Data**: Import from CSV + Download template
@@ -270,10 +281,12 @@ No PII, no `identify()`, no advertising identifiers. Mixpanel SDK manages anonym
 - **About**: Version number from `Constants.expoConfig?.version`
 
 ### Privacy
+
 - Plain-text privacy policy screen
 - Covers: local-only storage, anonymous analytics (Mixpanel), no advertising IDs, contact email
 
 ### Onboarding (3 slides, FlatList)
+
 1. "Know your number" — hero net worth number
 2. "Every account, one place" — type chips grid (Ionicons icons)
 3. "Let's get started" — opens `AddAccountSheet`; "Skip for now" link
@@ -282,6 +295,7 @@ After account saved → `hasOnboarded = true` → home.
 Skip → home.
 
 ### Import Result
+
 - Success/fail icon
 - Accounts created, entries imported, rows skipped counts
 - Expandable skipped-row error list (row number + reason)
@@ -335,11 +349,11 @@ Both sheets use `forwardRef` + `useImperativeHandle` to expose `present`/`dismis
 
 ```ts
 // AddAccountSheet
-addAccountRef.current?.present()
+addAccountRef.current?.present();
 
 // AddEntrySheet
-addEntryRef.current?.presentForAccount(accountId)
-addEntryRef.current?.presentForEdit(accountId, entry)
+addEntryRef.current?.presentForAccount(accountId);
+addEntryRef.current?.presentForEdit(accountId, entry);
 ```
 
 Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct keyboard handling.
@@ -364,17 +378,27 @@ Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct key
 ## Sessions
 
 ### Session 1 — Scaffold + Foundation ✅ COMPLETE
+
 ### Session 2 — Data Layer ✅ COMPLETE
+
 ### Session 3 — Graph Component ✅ COMPLETE
+
 ### Session 4 — Home Screen ✅ COMPLETE
+
 ### Session 5 — Account Detail Screen ✅ COMPLETE
+
 ### Session 6 — Add / Edit Flows ✅ COMPLETE
+
 ### Session 7 — Onboarding + Settings ✅ COMPLETE
+
 ### Session 8 — CSV Import ✅ COMPLETE
+
 ### Session 9 — Polish ✅ COMPLETE
+
 ### Analytics — Mixpanel ✅ COMPLETE
 
 ### Session 10 — Graph & Icons ✅ COMPLETE
+
 - Account type icons: emoji glyphs → Ionicons names in `accountTypes.ts`
 - `AddAccountSheet` type grid and onboarding slide 2 render `<Ionicons>` instead of `<Text>`
 - Ownership badge in `AccountCard` sized to match `TypePill` (same height/padding/font)
@@ -384,6 +408,7 @@ Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct key
 - Removed `showZero` prop from `NetWorthGraph`; y-axis auto-fits actual data range
 
 ### Session 11 — Date Picker & Settings Overhaul ✅ COMPLETE
+
 - `DateSelector` rewritten: tappable row → native `DateTimePicker` (spinner iOS, modal Android); no future dates
 - Settings: **Appearance** section — System / Light / Dark radio rows; calls `setThemeOverride`; tracks `theme_changed`
 - Settings: **Currency** — single row `£ GBP` → `BottomSheetModal` with currency list
@@ -392,6 +417,7 @@ Use `BottomSheetTextInput` (not plain `TextInput`) inside sheets for correct key
 - New screen: `src/app/(app)/privacy.tsx` — in-app privacy policy
 
 ### Session 12 — In-App Review Prompt 🔄 PARTIAL
+
 - `settingsStore`: added `hasSeenReviewPrompt: boolean` + `setHasSeenReviewPrompt` ✅
 - `index.tsx`: imports + store hooks wired (`StoreReview`, `hasSeenReviewPrompt`, `setHasSeenReviewPrompt`) ✅
 - **Pending**: review card UI in `index.tsx` — "Enjoying Worthi?" card when `entries.length >= 1 && !hasSeenReviewPrompt`; "Yes, love it!" → `StoreReview.requestReview()` + mark seen + track `review_prompted`; "Not yet" → mark seen + track `review_dismissed`

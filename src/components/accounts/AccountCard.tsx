@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 17,
     fontWeight: '600',
-    fontFamily: 'Geist_600SemiBold',
+    fontFamily: 'GeistMono_600SemiBold',
     letterSpacing: -0.3,
   },
   returnPct: {

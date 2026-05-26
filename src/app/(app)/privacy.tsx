@@ -29,8 +29,6 @@ export default function PrivacyScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.updated, { color: theme.fg3 }]}>Last updated: May 2025</Text>
-
         <Section title="Your Data Stays on Your Device" theme={theme}>
           All account data you enter — balances, entries, account names — is stored locally on your
           device only. Worthi does not upload, sync, or back up your financial data to any server.

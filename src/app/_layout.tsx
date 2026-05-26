@@ -13,6 +13,7 @@ import {
 import {
   GeistMono_400Regular,
   GeistMono_500Medium,
+  GeistMono_600SemiBold,
   useFonts as useGeistMonoFonts,
 } from '@expo-google-fonts/geist-mono';
 import * as SplashScreen from 'expo-splash-screen';
@@ -50,6 +51,7 @@ export default function RootLayout() {
   const [geistMonoLoaded] = useGeistMonoFonts({
     GeistMono_400Regular,
     GeistMono_500Medium,
+    GeistMono_600SemiBold,
   });
 
   const fontsLoaded = geistLoaded && geistMonoLoaded;
