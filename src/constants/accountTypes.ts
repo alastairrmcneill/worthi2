@@ -53,7 +53,7 @@ export const ACCOUNT_TYPES: Record<AccountType, AccountTypeConfig> = {
   property: {
     label: "Property",
     short: "Property",
-    color: "#14B8A6",
+    color: "#ca2ed8",
     glyph: "home-outline",
     sign: 1,
     description: "Property + mortgage.",
