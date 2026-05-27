@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, Platform, StyleSheet } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate } from '@/lib/formatting';
 import { toDateMs } from '@/lib/interpolate';
+import CalendarSheet, { type CalendarSheetHandle } from './CalendarSheet';
 
 interface Props {
   label?: string;
@@ -14,10 +15,19 @@ interface Props {
 
 export default function DateSelector({ label = 'Date', value, onChange }: Props) {
   const theme = useTheme();
-  const [showPicker, setShowPicker] = useState(false);
+  const calendarRef = useRef<CalendarSheetHandle>(null);
+  const [showAndroidPicker, setShowAndroidPicker] = useState(false);
 
-  function handleChange(_: DateTimePickerEvent, date?: Date) {
-    if (Platform.OS === 'android') setShowPicker(false);
+  function handlePress() {
+    if (Platform.OS === 'ios') {
+      calendarRef.current?.present(value, onChange, new Date());
+    } else {
+      setShowAndroidPicker(true);
+    }
+  }
+
+  function handleAndroidChange(_: DateTimePickerEvent, date?: Date) {
+    setShowAndroidPicker(false);
     if (date) onChange(toDateMs(date));
   }
 
@@ -26,7 +36,7 @@ export default function DateSelector({ label = 'Date', value, onChange }: Props)
       <Text style={[styles.label, { color: theme.fg2 }]}>{label}</Text>
 
       <Pressable
-        onPress={() => setShowPicker((v) => !v)}
+        onPress={handlePress}
         style={({ pressed }) => [
           styles.row,
           { borderColor: theme.border, backgroundColor: theme.surface2 },
@@ -37,15 +47,17 @@ export default function DateSelector({ label = 'Date', value, onChange }: Props)
         <Ionicons name="chevron-down" size={16} color={theme.fg3} />
       </Pressable>
 
-      {showPicker && (
+      {Platform.OS === 'android' && showAndroidPicker && (
         <DateTimePicker
           value={new Date(value)}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display="default"
           maximumDate={new Date()}
-          onChange={handleChange}
+          onChange={handleAndroidChange}
         />
       )}
+
+      {Platform.OS === 'ios' && <CalendarSheet ref={calendarRef} />}
     </View>
   );
 }

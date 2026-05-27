@@ -74,11 +74,8 @@ export default function OnboardingScreen() {
   }
 
   function renderSlide({ item, index }: ListRenderItemInfo<Slide>) {
-    const isLast = index === SLIDES.length - 1;
-
     return (
       <View style={[styles.slide, { width: SCREEN_W }]}>
-        {/* Illustration area */}
         {index === 1 && (
           <View style={styles.typeGrid}>
             {TYPE_ORDER.map((type) => {
@@ -112,44 +109,6 @@ export default function OnboardingScreen() {
           <Text style={[styles.headline, { color: theme.fg }]}>{item.headline}</Text>
           <Text style={[styles.sub, { color: theme.fg2 }]}>{item.sub}</Text>
         </View>
-
-        <View style={styles.actions}>
-          {isLast ? (
-            <>
-              <Pressable
-                onPress={() => addAccountRef.current?.present()}
-                style={({ pressed }) => [
-                  styles.primaryBtn,
-                  { backgroundColor: theme.fg },
-                  pressed && { opacity: 0.85 },
-                ]}
-              >
-                <Text style={[styles.primaryBtnText, { color: theme.bg }]}>
-                  Add First Account
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => goToHome('skipped')}
-                style={({ pressed }) => [styles.ghostBtn, pressed && { opacity: 0.6 }]}
-              >
-                <Text style={[styles.ghostBtnText, { color: theme.fg3 }]}>
-                  Skip for now
-                </Text>
-              </Pressable>
-            </>
-          ) : (
-            <Pressable
-              onPress={nextSlide}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                { backgroundColor: theme.fg },
-                pressed && { opacity: 0.85 },
-              ]}
-            >
-              <Text style={[styles.primaryBtnText, { color: theme.bg }]}>Continue</Text>
-            </Pressable>
-          )}
-        </View>
       </View>
     );
   }
@@ -181,6 +140,43 @@ export default function OnboardingScreen() {
           index,
         })}
       />
+
+      {/* Actions */}
+      <View style={[styles.actions, { paddingHorizontal: Spacing.lg }]}>
+        {activeIndex === SLIDES.length - 1 ? (
+          <>
+            <Pressable
+              onPress={() => addAccountRef.current?.present()}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                { backgroundColor: theme.fg },
+                pressed && { opacity: 0.85 },
+              ]}
+            >
+              <Text style={[styles.primaryBtnText, { color: theme.bg }]}>
+                Add First Account
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => goToHome('skipped')}
+              style={({ pressed }) => [styles.ghostBtn, pressed && { opacity: 0.6 }]}
+            >
+              <Text style={[styles.ghostBtnText, { color: theme.fg3 }]}>Skip for now</Text>
+            </Pressable>
+          </>
+        ) : (
+          <Pressable
+            onPress={nextSlide}
+            style={({ pressed }) => [
+              styles.primaryBtn,
+              { backgroundColor: theme.fg },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Text style={[styles.primaryBtnText, { color: theme.bg }]}>Continue</Text>
+          </Pressable>
+        )}
+      </View>
 
       {/* Dots */}
       <View style={styles.dots}>
@@ -298,8 +294,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 6,
-    paddingBottom: Spacing.xl,
     paddingTop: Spacing.md,
+    paddingBottom: Spacing.xl,
   },
   dot: {
     height: 8,

@@ -114,8 +114,9 @@ const AddAccountSheet = forwardRef<AddAccountSheetHandle, Props>(({ onAccountSav
       backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: theme.sheetBg }}
       handleIndicatorStyle={{ backgroundColor: theme.border }}
-      keyboardBehavior="interactive"
+      keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
       enablePanDownToClose
     >
       <BottomSheetScrollView

@@ -166,8 +166,9 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
       backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: theme.sheetBg }}
       handleIndicatorStyle={{ backgroundColor: theme.border }}
-      keyboardBehavior="interactive"
+      keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
       enablePanDownToClose
     >
       <BottomSheetScrollView
