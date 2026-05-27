@@ -12,17 +12,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import type { ImportError } from '@/lib/csvImport';
+import { commitImport } from '@/lib/csvImport';
 
 export default function ImportResultScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { accounts, entries, skipped, errors: errorsParam } =
+  const { mode, accounts, entries, skipped, errors: errorsParam } =
     useLocalSearchParams<{
+      mode: string;
       accounts: string;
       entries: string;
       skipped: string;
       errors: string;
     }>();
+
+  const isPreview = mode === 'preview';
 
   const [errorsExpanded, setErrorsExpanded] = useState(false);
 
@@ -38,6 +42,10 @@ export default function ImportResultScreen() {
 
   const success = accountsCreated > 0 || entriesCreated > 0;
 
+  function handleConfirmImport() {
+    commitImport((path: any) => router.replace(path));
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]} edges={['top']}>
       <View style={styles.topBar}>
@@ -48,7 +56,9 @@ export default function ImportResultScreen() {
         >
           <Ionicons name="close" size={22} color={theme.fg} />
         </Pressable>
-        <Text style={[styles.topTitle, { color: theme.fg }]}>Import Result</Text>
+        <Text style={[styles.topTitle, { color: theme.fg }]}>
+          {isPreview ? 'Import Preview' : 'Import Result'}
+        </Text>
         <View style={styles.topBtn} />
       </View>
 
@@ -57,25 +67,37 @@ export default function ImportResultScreen() {
         <View
           style={[
             styles.iconWrap,
-            { backgroundColor: success ? `${theme.success}18` : `${theme.danger}18` },
+            {
+              backgroundColor: isPreview
+                ? `${theme.accent}18`
+                : success
+                  ? `${theme.success}18`
+                  : `${theme.danger}18`,
+            },
           ]}
         >
           <Ionicons
-            name={success ? 'checkmark-circle' : 'alert-circle'}
+            name={isPreview ? 'cloud-upload-outline' : success ? 'checkmark-circle' : 'alert-circle'}
             size={52}
-            color={success ? theme.success : theme.danger}
+            color={isPreview ? theme.accent : success ? theme.success : theme.danger}
           />
         </View>
 
         <Text style={[styles.headline, { color: theme.fg }]}>
-          {success ? 'Import Complete' : 'Nothing Imported'}
+          {isPreview
+            ? skippedRows > 0
+              ? 'Review Before Importing'
+              : 'Ready to Import'
+            : success
+              ? 'Import Complete'
+              : 'Nothing Imported'}
         </Text>
 
         {/* Stats */}
         <View style={[styles.statsCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <StatRow
             icon="business-outline"
-            label="Accounts created"
+            label={isPreview ? 'Accounts to create' : 'Accounts created'}
             value={String(accountsCreated)}
             theme={theme}
             color={theme.success}
@@ -83,7 +105,7 @@ export default function ImportResultScreen() {
           <View style={[styles.divider, { backgroundColor: theme.border }]} />
           <StatRow
             icon="calendar-outline"
-            label="Entries imported"
+            label={isPreview ? 'Entries to import' : 'Entries imported'}
             value={String(entriesCreated)}
             theme={theme}
             color={theme.success}
@@ -145,17 +167,44 @@ export default function ImportResultScreen() {
           </View>
         )}
 
-        <Pressable
-          onPress={() => router.replace('/(app)')}
-          style={({ pressed }) => [
-            styles.ctaBtn,
-            { backgroundColor: theme.fg },
-            pressed && { opacity: 0.85 },
-          ]}
-        >
-          <Text style={[styles.ctaBtnText, { color: theme.bg }]}>View Accounts</Text>
-          <Ionicons name="arrow-forward" size={16} color={theme.bg} />
-        </Pressable>
+        {isPreview ? (
+          <>
+            <Pressable
+              onPress={handleConfirmImport}
+              style={({ pressed }) => [
+                styles.ctaBtn,
+                { backgroundColor: theme.fg },
+                pressed && { opacity: 0.85 },
+              ]}
+            >
+              <Text style={[styles.ctaBtnText, { color: theme.bg }]}>
+                Import {accountsCreated} {accountsCreated === 1 ? 'Account' : 'Accounts'}
+              </Text>
+              <Ionicons name="cloud-upload-outline" size={16} color={theme.bg} />
+            </Pressable>
+            <Pressable
+              onPress={() => router.replace('/(app)')}
+              style={({ pressed }) => [
+                styles.cancelBtn,
+                pressed && { opacity: 0.6 },
+              ]}
+            >
+              <Text style={[styles.cancelBtnText, { color: theme.fg2 }]}>Cancel</Text>
+            </Pressable>
+          </>
+        ) : (
+          <Pressable
+            onPress={() => router.replace('/(app)')}
+            style={({ pressed }) => [
+              styles.ctaBtn,
+              { backgroundColor: theme.fg },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Text style={[styles.ctaBtnText, { color: theme.bg }]}>View Accounts</Text>
+            <Ionicons name="arrow-forward" size={16} color={theme.bg} />
+          </Pressable>
+        )}
 
         <View style={{ height: Spacing.xl }} />
       </ScrollView>
@@ -302,5 +351,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'Geist_600SemiBold',
+  },
+  cancelBtn: {
+    width: '100%',
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.xs,
+  },
+  cancelBtnText: {
+    fontSize: 15,
+    fontFamily: 'Geist_500Medium',
   },
 });

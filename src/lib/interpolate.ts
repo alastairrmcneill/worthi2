@@ -25,7 +25,7 @@ export function interpolateContribution(
   return entry ? entryContribution(account, entry) : 0;
 }
 
-// Generate sample dates: daily for ranges ≤ 31 days, monthly + today otherwise.
+// Generate sample dates: daily ≤ 31 days, weekly ≤ 365 days, monthly otherwise.
 function sampleDates(startMs: number, endMs: number): number[] {
   const rangeDays = (endMs - startMs) / DAY_MS;
   const dates: number[] = [];
@@ -35,6 +35,13 @@ function sampleDates(startMs: number, endMs: number): number[] {
     while (d <= endMs) {
       dates.push(d);
       d += DAY_MS;
+    }
+    if (dates[dates.length - 1] !== endMs) dates.push(endMs);
+  } else if (rangeDays <= 365) {
+    let d = startMs;
+    while (d <= endMs) {
+      dates.push(d);
+      d += 7 * DAY_MS;
     }
     if (dates[dates.length - 1] !== endMs) dates.push(endMs);
   } else {

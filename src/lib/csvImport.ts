@@ -148,8 +148,16 @@ export function parseCsvText(csvText: string): {
   return { accounts: accountMap, entriesByName, errors };
 }
 
+interface PendingImport {
+  accounts: Map<string, NewAccount>;
+  entriesByName: Map<string, NewEntry[]>;
+  errors: ImportError[];
+}
+
+let pendingImport: PendingImport | null = null;
+
 // `navigate` accepts `any` so we don't need to import the full router type
-export async function importCsv(navigate: (path: any) => void): Promise<void> {
+export async function previewCsv(navigate: (path: any) => void): Promise<void> {
   const result = await DocumentPicker.getDocumentAsync({
     type: ['text/csv', 'text/comma-separated-values', 'text/plain'],
     copyToCacheDirectory: true,
@@ -161,6 +169,22 @@ export async function importCsv(navigate: (path: any) => void): Promise<void> {
   const csvText = await readAsStringAsync(fileUri);
 
   const { accounts, entriesByName, errors } = parseCsvText(csvText);
+
+  let entriesTotal = 0;
+  for (const entries of entriesByName.values()) entriesTotal += entries.length;
+
+  pendingImport = { accounts, entriesByName, errors };
+
+  navigate(
+    `/(app)/import-result?mode=preview&accounts=${accounts.size}&entries=${entriesTotal}&skipped=${errors.length}&errors=${encodeURIComponent(JSON.stringify(errors))}`
+  );
+}
+
+export function commitImport(navigate: (path: any) => void): void {
+  if (!pendingImport) return;
+
+  const { accounts, entriesByName, errors } = pendingImport;
+  pendingImport = null;
 
   const store = useAccountStore.getState();
   let accountsCreated = 0;
@@ -183,7 +207,5 @@ export async function importCsv(navigate: (path: any) => void): Promise<void> {
     skipped_count: errors.length,
   });
 
-  navigate(
-    `/(app)/import-result?accounts=${accountsCreated}&entries=${entriesCreated}&skipped=${errors.length}&errors=${encodeURIComponent(JSON.stringify(errors))}`
-  );
+  navigate('/(app)');
 }

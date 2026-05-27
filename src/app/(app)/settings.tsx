@@ -26,7 +26,7 @@ import { Spacing } from '@/constants/theme';
 import { formatCurrency } from '@/lib/formatting';
 import { interpolateContribution } from '@/lib/interpolate';
 import TypePill from '@/components/accounts/TypePill';
-import { importCsv } from '@/lib/csvImport';
+import { previewCsv } from '@/lib/csvImport';
 import { downloadCsvTemplate } from '@/lib/csvTemplate';
 import { track } from '@/lib/analytics';
 
@@ -74,7 +74,7 @@ export default function SettingsScreen() {
 
   async function handleImport() {
     try {
-      await importCsv((path: any) => router.push(path));
+      await previewCsv((path: any) => router.push(path));
     } catch (e: any) {
       Alert.alert('Import Failed', e?.message ?? 'Could not import CSV');
     }
