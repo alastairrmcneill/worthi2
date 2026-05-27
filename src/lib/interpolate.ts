@@ -80,30 +80,31 @@ export function buildTotalSeries(
   });
 }
 
-// House account: two series — equity (user share) and full property value.
+// House account: two series — equity (user share) and total put in (deposit + principal repaid).
 export function buildHouseSeries(
   account: Account,
   entries: Entry[],
   startDate: number,
   endDate: number
-): { equity: SeriesPoint[]; propertyValue: SeriesPoint[] } {
+): { equity: SeriesPoint[]; putIn: SeriesPoint[] } {
   const sorted = entries.slice().sort((a, b) => b.date - a.date);
   const equity: SeriesPoint[] = [];
-  const propertyValue: SeriesPoint[] = [];
+  const putIn: SeriesPoint[] = [];
+  const purchasePrice = account.purchasePrice ?? 0;
 
   for (const ts of sampleDates(startDate, endDate)) {
     const entry = sorted.find((e) => e.date <= ts);
     if (!entry) {
       equity.push({ ts, value: 0 });
-      propertyValue.push({ ts, value: 0 });
+      putIn.push({ ts, value: 0 });
     } else {
       const mortgage = entry.mortgageBalance ?? 0;
       equity.push({ ts, value: (entry.value - mortgage) * (account.ownershipPct / 100) });
-      propertyValue.push({ ts, value: entry.value });
+      putIn.push({ ts, value: purchasePrice > 0 ? (purchasePrice - mortgage) * (account.ownershipPct / 100) : 0 });
     }
   }
 
-  return { equity, propertyValue };
+  return { equity, putIn };
 }
 
 // Investment account: value and deposited series separately.

@@ -91,13 +91,15 @@ export function houseStats(account: Account, entries: Entry[]): {
   currentMortgage: number;
   fullEquity: number;
   yourEquity: number;
-  equityGain: number;
+  totalPutIn: number | null;
+  equityReturn: number | null;
+  returnPct: number | null;
 } {
   const purchasePrice = account.purchasePrice ?? 0;
   const originalDeposit = account.originalDeposit ?? 0;
 
   if (entries.length === 0) {
-    return { purchasePrice, originalDeposit, currentValue: 0, currentMortgage: 0, fullEquity: 0, yourEquity: 0, equityGain: 0 };
+    return { purchasePrice, originalDeposit, currentValue: 0, currentMortgage: 0, fullEquity: 0, yourEquity: 0, totalPutIn: null, equityReturn: null, returnPct: null };
   }
 
   const latest = entries.slice().sort((a, b) => b.date - a.date)[0];
@@ -105,8 +107,14 @@ export function houseStats(account: Account, entries: Entry[]): {
   const currentMortgage = latest.mortgageBalance ?? 0;
   const fullEquity = currentValue - currentMortgage;
   const yourEquity = fullEquity * (account.ownershipPct / 100);
-  const initialEquity = originalDeposit * (account.ownershipPct / 100);
-  const equityGain = yourEquity - initialEquity;
 
-  return { purchasePrice, originalDeposit, currentValue, currentMortgage, fullEquity, yourEquity, equityGain };
+  const totalPutIn = purchasePrice > 0
+    ? (purchasePrice - currentMortgage) * (account.ownershipPct / 100)
+    : null;
+  const equityReturn = totalPutIn !== null ? yourEquity - totalPutIn : null;
+  const returnPct = totalPutIn !== null && totalPutIn > 0
+    ? (equityReturn! / totalPutIn) * 100
+    : null;
+
+  return { purchasePrice, originalDeposit, currentValue, currentMortgage, fullEquity, yourEquity, totalPutIn, equityReturn, returnPct };
 }

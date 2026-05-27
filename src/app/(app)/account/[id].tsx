@@ -98,8 +98,9 @@ export default function AccountDetailScreen() {
       return { series: value, series2: deposited, series2Style: 'dashed' as const };
     }
     if (account.type === 'house') {
-      const { propertyValue, equity } = buildHouseSeries(account, accountEntries, startDate, now);
-      return { series: propertyValue, series2: equity, series2Style: 'dashed' as const };
+      const { equity, putIn } = buildHouseSeries(account, accountEntries, startDate, now);
+      const hasPurchasePrice = (account.purchasePrice ?? 0) > 0;
+      return { series: equity, series2: hasPurchasePrice ? putIn : undefined, series2Style: 'dashed' as const };
     }
     return {
       series: buildAccountSeries(account, accountEntries, startDate, now),
@@ -113,12 +114,7 @@ export default function AccountDetailScreen() {
     [account, accountEntries]
   );
 
-  // House: show equity (series2) during scrub; others show series value
-  const displayValue = scrub
-    ? account?.type === 'house'
-      ? (scrub.value2 ?? scrub.value)
-      : scrub.value
-    : currentValue;
+  const displayValue = scrub ? scrub.value : currentValue;
 
   if (!isLoaded || !account) return null;
 
@@ -469,19 +465,28 @@ function HouseStats({
   const equityLabel = account.isShared ? `Your Equity (${account.ownershipPct}%)` : 'Your Equity';
   return (
     <StatGrid theme={theme}>
+      <StatCell label={equityLabel} value={formatCurrency(stats.yourEquity, currency)} theme={theme} />
+      {stats.totalPutIn !== null && (
+        <StatCell label="Total Put In" value={formatCurrency(stats.totalPutIn, currency)} theme={theme} />
+      )}
+      {stats.equityReturn !== null && (
+        <StatCell
+          label="Return"
+          value={formatCurrencySigned(stats.equityReturn, currency)}
+          valueColor={stats.equityReturn >= 0 ? theme.success : theme.danger}
+          theme={theme}
+        />
+      )}
+      {stats.returnPct !== null && (
+        <StatCell
+          label="Return %"
+          value={formatPercent(stats.returnPct)}
+          valueColor={stats.returnPct >= 0 ? theme.success : theme.danger}
+          theme={theme}
+        />
+      )}
       <StatCell label="Property Value" value={formatCurrency(stats.currentValue, currency)} theme={theme} />
       <StatCell label="Mortgage" value={formatCurrency(stats.currentMortgage, currency)} theme={theme} />
-      <StatCell label="Full Equity" value={formatCurrency(stats.fullEquity, currency)} theme={theme} />
-      <StatCell label={equityLabel} value={formatCurrency(stats.yourEquity, currency)} theme={theme} />
-      <StatCell
-        label="Equity Gain"
-        value={formatCurrencySigned(stats.equityGain, currency)}
-        valueColor={stats.equityGain >= 0 ? theme.success : theme.danger}
-        theme={theme}
-      />
-      {stats.purchasePrice > 0 && (
-        <StatCell label="Purchase Price" value={formatCurrency(stats.purchasePrice, currency)} theme={theme} />
-      )}
     </StatGrid>
   );
 }
