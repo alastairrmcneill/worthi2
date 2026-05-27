@@ -397,7 +397,7 @@ export default function AccountDetailScreen() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function StatGrid({ children, theme }: { children: React.ReactNode; theme: Theme }) {
+function StatGrid({ children }: { children: React.ReactNode; theme: Theme }) {
   return <View style={statStyles.grid}>{children}</View>;
 }
 
@@ -519,10 +519,9 @@ function HistoryRow({
       secondary = `dep. ${formatCurrency(entry.deposited, currency)}`;
     }
   } else if (account.type === 'property') {
-    primaryValue = formatCurrency(entry.value, currency);
-    if (entry.mortgageBalance != null) {
-      secondary = `mort. ${formatCurrency(entry.mortgageBalance, currency)}`;
-    }
+    const equity = (entry.value - (entry.mortgageBalance ?? 0)) * (account.ownershipPct / 100);
+    primaryValue = formatCurrency(equity, currency);
+    secondary = `value ${formatCurrency(entry.value, currency)}`;
   } else {
     primaryValue = formatCurrency(entry.value, currency);
   }
