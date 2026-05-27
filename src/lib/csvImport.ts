@@ -24,7 +24,7 @@ const VALID_TYPES = new Set<string>([
   'investment',
   'loan',
   'pension',
-  'house',
+  'property',
 ]);
 
 function parseBool(s: string): boolean {
@@ -112,7 +112,7 @@ export function parseCsvText(csvText: string): {
     if (!accountMap.has(account_name)) {
       const isShared = parseBool(is_shared_str);
       const ownershipPct =
-        type === 'house' && isShared
+        type === 'property' && isShared
           ? Math.min(99, Math.max(1, parseFloat(ownership_pct_str) || 50))
           : 100;
 
@@ -121,17 +121,17 @@ export function parseCsvText(csvText: string): {
         type: type as AccountType,
         isArchived: false,
         purchasePrice:
-          type === 'house' ? (parseFloat(purchase_price_str) || null) : null,
+          type === 'property' ? (parseFloat(purchase_price_str) || null) : null,
         originalDeposit:
-          type === 'house' ? (parseFloat(original_deposit_str) || null) : null,
-        isShared: type === 'house' ? isShared : false,
+          type === 'property' ? (parseFloat(original_deposit_str) || null) : null,
+        isShared: type === 'property' ? isShared : false,
         ownershipPct,
       });
     }
 
     const isLiability = type === 'credit_card' || type === 'loan';
     const storedValue = isLiability ? -rawValue : rawValue;
-    const finalValue = type === 'house' ? rawValue : storedValue;
+    const finalValue = type === 'property' ? rawValue : storedValue;
 
     const arr = entriesByName.get(account_name) ?? [];
     arr.push({
@@ -140,7 +140,7 @@ export function parseCsvText(csvText: string): {
       value: finalValue,
       deposited: type === 'investment' ? (parseFloat(deposited_str) || null) : null,
       mortgageBalance:
-        type === 'house' ? (parseFloat(mortgage_balance_str) || null) : null,
+        type === 'property' ? (parseFloat(mortgage_balance_str) || null) : null,
     });
     entriesByName.set(account_name, arr);
   }

@@ -32,7 +32,7 @@ export default function AccountCard({ account, entries }: Props) {
   }
 
   // Equity gain % for house
-  if (account.type === 'house' && account.originalDeposit && account.originalDeposit > 0) {
+  if (account.type === 'property' && account.originalDeposit && account.originalDeposit > 0) {
     const latestEntry = entries.slice().sort((a, b) => b.date - a.date)[0];
     if (latestEntry) {
       const equity = (latestEntry.value - (latestEntry.mortgageBalance ?? 0)) * (account.ownershipPct / 100);
@@ -56,7 +56,7 @@ export default function AccountCard({ account, entries }: Props) {
       <View style={styles.left}>
         <View style={styles.topRow}>
           <TypePill type={account.type} />
-          {account.type === 'house' && account.isShared && (
+          {account.type === 'property' && account.isShared && (
             <View style={[styles.sharedBadge, { backgroundColor: `${typeConfig.color}1F` }]}>
               <Text style={[styles.sharedText, { color: typeConfig.color }]}>
                 {account.ownershipPct}% owned

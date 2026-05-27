@@ -1,4 +1,4 @@
-export type AccountType = "current" | "credit_card" | "investment" | "loan" | "pension" | "house";
+export type AccountType = "current" | "credit_card" | "investment" | "loan" | "pension" | "property";
 
 export interface AccountTypeConfig {
   label: string;
@@ -50,14 +50,14 @@ export const ACCOUNT_TYPES: Record<AccountType, AccountTypeConfig> = {
     sign: 1,
     description: "Retirement value.",
   },
-  house: {
-    label: "House",
-    short: "House",
-    color: "#a315a3",
+  property: {
+    label: "Property",
+    short: "Property",
+    color: "#14B8A6",
     glyph: "home-outline",
     sign: 1,
     description: "Property + mortgage.",
   },
 };
 
-export const TYPE_ORDER: AccountType[] = ["current", "investment", "house", "pension", "credit_card", "loan"];
+export const TYPE_ORDER: AccountType[] = ["current", "investment", "property", "pension", "credit_card", "loan"];

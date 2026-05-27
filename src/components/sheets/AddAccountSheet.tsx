@@ -84,19 +84,19 @@ const AddAccountSheet = forwardRef<AddAccountSheetHandle, Props>(({ onAccountSav
       name: form.name.trim(),
       type: form.type,
       isArchived: false,
-      purchasePrice: form.type === "house" ? parseFloat(form.purchasePrice) || null : null,
-      originalDeposit: form.type === "house" ? parseFloat(form.originalDeposit) || null : null,
-      isShared: form.type === "house" ? form.isShared : false,
+      purchasePrice: form.type === "property" ? parseFloat(form.purchasePrice) || null : null,
+      originalDeposit: form.type === "property" ? parseFloat(form.originalDeposit) || null : null,
+      isShared: form.type === "property" ? form.isShared : false,
       ownershipPct:
-        form.type === "house" && form.isShared ? Math.min(99, Math.max(1, parseFloat(form.ownershipPct) || 50)) : 100,
+        form.type === "property" && form.isShared ? Math.min(99, Math.max(1, parseFloat(form.ownershipPct) || 50)) : 100,
     });
 
     addEntry({
       accountId: account.id,
       date: form.date,
-      value: form.type === "house" ? rawValue : storedValue,
+      value: form.type === "property" ? rawValue : storedValue,
       deposited: form.type === "investment" ? parseFloat(form.deposited) || 0 : null,
-      mortgageBalance: form.type === "house" ? parseFloat(form.mortgageBalance) || 0 : null,
+      mortgageBalance: form.type === "property" ? parseFloat(form.mortgageBalance) || 0 : null,
     });
 
     track("account_created", { account_type: form.type! });
@@ -209,7 +209,7 @@ const AddAccountSheet = forwardRef<AddAccountSheetHandle, Props>(({ onAccountSav
               returnKeyType="next"
             />
 
-            {form.type === "house" && (
+            {form.type === "property" && (
               <>
                 <Field
                   label="Purchase Price"
@@ -291,7 +291,7 @@ const AddAccountSheet = forwardRef<AddAccountSheetHandle, Props>(({ onAccountSav
               label={
                 form.type === "credit_card" || form.type === "loan"
                   ? "Amount Owed"
-                  : form.type === "house"
+                  : form.type === "property"
                     ? "Property Value"
                     : form.type === "investment"
                       ? "Current Value"
@@ -308,7 +308,7 @@ const AddAccountSheet = forwardRef<AddAccountSheetHandle, Props>(({ onAccountSav
               }
             />
 
-            {form.type === "house" && (
+            {form.type === "property" && (
               <Field
                 label="Current Mortgage Balance"
                 value={form.mortgageBalance}

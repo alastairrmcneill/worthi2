@@ -4,7 +4,7 @@ const DAY_MS = 86_400_000;
 
 // Net worth contribution of a single entry for a given account
 export function entryContribution(account: Account, entry: Entry): number {
-  if (account.type === 'house') {
+  if (account.type === 'property') {
     const mortgage = entry.mortgageBalance ?? 0;
     const equity = entry.value - mortgage;
     return equity * (account.ownershipPct / 100);

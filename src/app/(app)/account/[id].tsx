@@ -97,7 +97,7 @@ export default function AccountDetailScreen() {
       const { value, deposited } = buildInvestmentSeries(accountEntries, startDate, now);
       return { series: value, series2: deposited, series2Style: 'dashed' as const };
     }
-    if (account.type === 'house') {
+    if (account.type === 'property') {
       const { equity, putIn } = buildHouseSeries(account, accountEntries, startDate, now);
       const hasPurchasePrice = (account.purchasePrice ?? 0) > 0;
       return { series: equity, series2: hasPurchasePrice ? putIn : undefined, series2Style: 'dashed' as const };
@@ -239,7 +239,7 @@ export default function AccountDetailScreen() {
           >
             {formatCurrency(displayValue, currency)}
           </Text>
-          {account.type === 'house' && account.isShared && (
+          {account.type === 'property' && account.isShared && (
             <View style={[styles.sharedBadge, { backgroundColor: `${typeConfig.color}1F` }]}>
               <Text style={[styles.sharedText, { color: typeConfig.color }]}>
                 {account.ownershipPct}% owned
@@ -275,7 +275,7 @@ export default function AccountDetailScreen() {
           {account.type === 'investment' && (
             <InvestmentStats entries={accountEntries} currency={currency} theme={theme} />
           )}
-          {account.type === 'house' && (
+          {account.type === 'property' && (
             <HouseStats account={account} entries={accountEntries} currency={currency} theme={theme} />
           )}
           {(account.type === 'current' || account.type === 'pension') && (
@@ -518,7 +518,7 @@ function HistoryRow({
     if (entry.deposited != null) {
       secondary = `dep. ${formatCurrency(entry.deposited, currency)}`;
     }
-  } else if (account.type === 'house') {
+  } else if (account.type === 'property') {
     primaryValue = formatCurrency(entry.value, currency);
     if (entry.mortgageBalance != null) {
       secondary = `mort. ${formatCurrency(entry.mortgageBalance, currency)}`;

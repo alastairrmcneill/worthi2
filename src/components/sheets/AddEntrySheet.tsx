@@ -106,11 +106,11 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
     const rawValue = parseFloat(entryValue) || 0;
     const isLiability = account.type === 'credit_card' || account.type === 'loan';
     const storedValue = isLiability ? -rawValue : rawValue;
-    const finalValue = account.type === 'house' ? rawValue : storedValue;
+    const finalValue = account.type === 'property' ? rawValue : storedValue;
     const finalDeposited =
       account.type === 'investment' ? (parseFloat(deposited) || 0) : null;
     const finalMortgage =
-      account.type === 'house' ? (parseFloat(mortgageBalance) || 0) : null;
+      account.type === 'property' ? (parseFloat(mortgageBalance) || 0) : null;
 
     if (isEditing && editEntry) {
       updateEntry(editEntry.id, {
@@ -211,7 +211,7 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
             label={
               account?.type === 'credit_card' || account?.type === 'loan'
                 ? 'Amount Owed'
-                : account?.type === 'house'
+                : account?.type === 'property'
                 ? 'Property Value'
                 : account?.type === 'investment'
                 ? 'Current Value'
@@ -230,7 +230,7 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
             }
           />
 
-          {account?.type === 'house' && (
+          {account?.type === 'property' && (
             <Field
               label="Current Mortgage Balance"
               value={mortgageBalance}

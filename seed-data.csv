@@ -1,6 +1,6 @@
 account_name,account_type,date,value,deposited,mortgage_balance,purchase_price,original_deposit,is_shared,ownership_pct
 Emergency Fund,current,2026-05-06,15.15
-House,house,2026-05-06,27927.00,,,21500.00,,false,
+House,property,2026-05-06,27927.00,,,21500.00,,false,
 Kraken,investment,2024-10-01,232.48,432.00
 Kraken,investment,2024-11-05,423.66,400.00
 Kraken,investment,2024-12-02,795.85,600.00

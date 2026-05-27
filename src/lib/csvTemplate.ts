@@ -11,8 +11,8 @@ const EXAMPLE_ROWS = [
   'Car Loan,loan,2024-01-01,8000,,,,,,',
   'Stocks ISA,investment,2024-01-01,25000,20000,,,,,',
   'SIPP Pension,pension,2024-01-01,45000,,,,,,',
-  'My House,house,2024-01-01,320000,195000,250000,50000,false,',
-  'Shared Flat,house,2024-01-01,450000,270000,380000,80000,true,60',
+  'My House,property,2024-01-01,320000,195000,250000,50000,false,',
+  'Shared Flat,property,2024-01-01,450000,270000,380000,80000,true,60',
 ];
 
 export async function downloadCsvTemplate(): Promise<void> {
