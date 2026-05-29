@@ -1,4 +1,4 @@
-package com.alastair.r.mcneill.worthi
+package com.alastair.r.mcneill.worthi2
 
 import android.app.Application
 import android.content.res.Configuration

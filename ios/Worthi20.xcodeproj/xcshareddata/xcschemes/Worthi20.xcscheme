@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "Worthi.app"
-               BlueprintName = "Worthi"
-               ReferencedContainer = "container:Worthi.xcodeproj">
+               BuildableName = "Worthi20.app"
+               BlueprintName = "Worthi20"
+               ReferencedContainer = "container:Worthi20.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "WorthiTests.xctest"
-               BlueprintName = "WorthiTests"
-               ReferencedContainer = "container:Worthi.xcodeproj">
+               BuildableName = "Worthi20Tests.xctest"
+               BlueprintName = "Worthi20Tests"
+               ReferencedContainer = "container:Worthi20.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "Worthi.app"
-            BlueprintName = "Worthi"
-            ReferencedContainer = "container:Worthi.xcodeproj">
+            BuildableName = "Worthi20.app"
+            BlueprintName = "Worthi20"
+            ReferencedContainer = "container:Worthi20.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "Worthi.app"
-            BlueprintName = "Worthi"
-            ReferencedContainer = "container:Worthi.xcodeproj">
+            BuildableName = "Worthi20.app"
+            BlueprintName = "Worthi20"
+            ReferencedContainer = "container:Worthi20.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

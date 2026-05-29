@@ -33,7 +33,7 @@ export default function HomeScreen() {
   const isLoaded = useAccountStore((s) => s.isLoaded);
 
   const addAccountRef = useRef<AddAccountSheetHandle>(null);
-  const [range, setRange] = useState<RangeKey>("6M");
+  const [range, setRange] = useState<RangeKey>("All");
   const [selectedTypes, setSelectedTypes] = useState<Set<AccountType>>(new Set());
 
   function handleRangeChange(r: RangeKey) {

@@ -1,4 +1,4 @@
-package com.alastair.r.mcneill.worthi
+package com.alastair.r.mcneill.worthi2
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

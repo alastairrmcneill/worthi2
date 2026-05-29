@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Worthi</string>
+	<string>Worthi 2.0</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -28,7 +28,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>worthi</string>
-				<string>com.alastair.r.mcneill.worthi</string>
+				<string>com.alastair.r.mcneill.worthi2</string>
 			</array>
 		</dict>
 	</array>
