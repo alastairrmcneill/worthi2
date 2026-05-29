@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support — Worthi</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #21262d;
+      --fg: #e6edf3;
+      --fg2: #8b949e;
+      --accent: #3b82f6;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+    }
+
+    .wordmark {
+      display: inline-block;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--fg);
+      text-decoration: none;
+      letter-spacing: -0.3px;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--fg2);
+      font-size: 0.95rem;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2rem 0;
+    }
+
+    .contact-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .contact-card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .contact-card p {
+      color: var(--fg2);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .contact-card a.btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.55rem 1.25rem;
+      border-radius: 7px;
+      text-decoration: none;
+    }
+
+    .contact-card a.btn:hover {
+      opacity: 0.88;
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .faq-item h3 {
+      font-size: 0.98rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .faq-item p {
+      color: var(--fg2);
+      font-size: 0.93rem;
+      line-height: 1.7;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    h2.section-heading {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--fg);
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--fg2);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a class="wordmark" href="index.html">Worthi</a>
+      <h1>Support</h1>
+      <p class="subtitle">Get help with Worthi</p>
+    </header>
+
+    <hr class="divider" />
+
+    <div class="contact-card">
+      <h2>Contact Us</h2>
+      <p>Have a question or found a bug? We'll get back to you as soon as possible.</p>
+      <a class="btn" href="mailto:alastair.r.mcneill@gmail.com">Email Support</a>
+    </div>
+
+    <h2 class="section-heading">Frequently Asked Questions</h2>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <h3>Is my financial data safe?</h3>
+        <p>
+          Yes. All data is stored locally on your device only. Worthi never uploads your balances
+          or account details to any server. There is no account registration and no cloud sync.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h3>What happens if I delete the app?</h3>
+        <p>
+          All data is removed with the app. There is no backup or cloud copy. If you want to keep
+          your data, export it first via Settings → Data → Download Template, or use
+          Settings → Data → Import from CSV to back up and restore.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How do I add a credit card or loan?</h3>
+        <p>
+          Tap the + button on the home screen, choose Credit Card or Loan, then enter the amount
+          you owe as a positive number. Worthi stores it as a negative value and shows it in red,
+          so it reduces your net worth correctly.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How does the investment return calculation work?</h3>
+        <p>
+          When adding an investment entry, enter both the total deposited (cumulative running total
+          of money you've put in) and the current value. Return is calculated as
+          (current value − deposited) ÷ deposited × 100.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How does a shared house work?</h3>
+        <p>
+          When adding a property, toggle "Shared asset" and enter your ownership percentage.
+          Worthi calculates your net worth contribution as your share of the equity
+          (property value minus mortgage balance × your ownership %).
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Why do archived accounts still appear in the graph?</h3>
+        <p>
+          Archived accounts are hidden from the account list but their historical data is preserved
+          in the net worth graph. This keeps your history accurate. You can restore an archived
+          account any time from Settings → Archived Accounts.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How do I import data from a spreadsheet?</h3>
+        <p>
+          Go to Settings → Data → Download Template to get a CSV with the correct column format.
+          Fill it in with your accounts and entries, then use Settings → Data → Import from CSV
+          to load it into the app.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Can I change the currency?</h3>
+        <p>
+          Yes — go to Settings and tap the currency row. Changing it relabels all values with the
+          new symbol. No conversion is applied, so enter all values in your chosen currency.
+        </p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Does Worthi collect any personal data?</h3>
+        <p>
+          No. Worthi uses anonymous analytics (Mixpanel) to understand how the app is used —
+          no names, emails, or financial values are ever sent. See our
+          <a href="privacy.html">Privacy Policy</a> for full details.
+        </p>
+      </div>
+    </div>
+
+    <footer>
+      <span>© 2025 Worthi</span>
+      <a href="privacy.html">Privacy Policy</a>
+    </footer>
+  </div>
+</body>
+</html>

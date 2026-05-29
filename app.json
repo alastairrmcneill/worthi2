@@ -8,15 +8,14 @@
     "scheme": "worthi",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/app-icon.icon",
       "bundleIdentifier": "com.alastair.r.mcneill.worthi2"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/android-icon.png",
+        "backgroundImage": "./assets/android-icon.png",
+        "monochromeImage": "./assets/android-icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.alastair.r.mcneill.worthi2"
