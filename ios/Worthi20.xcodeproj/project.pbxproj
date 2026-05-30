@@ -23,8 +23,8 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Worthi20/Info.plist; sourceTree = "<group>"; };
 		2BB4F0B27AFEE42133E8B2B3 /* libPods-Worthi20.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Worthi20.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		421D75644ABE1586DD8E3F5B /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Worthi20/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		71C331ABF0DFC6E5579A0FBF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Worthi20/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		86E735667F714CFF8522450F /* app-icon.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "app-icon.icon"; path = "Worthi20/app-icon.icon"; sourceTree = "<group>"; };
+		71C331ABF0DFC6E5579A0FBF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Worthi20/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		86E735667F714CFF8522450F /* app-icon.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "app-icon.icon"; path = "Worthi20/app-icon.icon"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Worthi20/SplashScreen.storyboard; sourceTree = "<group>"; };
 		B1B78892F7D4F5FF801949EE /* Pods-Worthi20.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Worthi20.release.xcconfig"; path = "Target Support Files/Pods-Worthi20/Pods-Worthi20.release.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
@@ -106,7 +106,6 @@
 				EC949F2C31FD706B017B2421 /* Pods-Worthi20.debug.xcconfig */,
 				B1B78892F7D4F5FF801949EE /* Pods-Worthi20.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -353,6 +352,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Worthi20/Worthi20.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4R5HGU4283;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -390,6 +390,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Worthi20/Worthi20.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4R5HGU4283;
 				INFOPLIST_FILE = Worthi20/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (

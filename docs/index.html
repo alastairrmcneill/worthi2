@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Worthi — Know Your Net Worth</title>
+  <meta name="description" content="Track your net worth across every account — investments, pension, property, and debts — in one beautiful app." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0f1a;
+      --navy:     #0d1f3c;
+      --surface:  #111827;
+      --border:   #1e2d45;
+      --fg:       #f0f4ff;
+      --fg2:      #8b9bbf;
+      --accent:   #3b82f6;
+      --accent2:  #60a5fa;
+      --green:    #10b981;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,15,26,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--fg);
+      text-decoration: none;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--fg2);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .nav-links a:hover { color: var(--fg); }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 1.5rem 4rem;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(59,130,246,0.15);
+      color: var(--accent2);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.3rem 0.9rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, #f0f4ff 0%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--fg2);
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+    }
+
+    .download-btns {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-store {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--fg);
+      color: #0a0f1a;
+      border-radius: 10px;
+      padding: 0.65rem 1.4rem;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: opacity 0.15s;
+    }
+
+    .btn-store:hover { opacity: 0.88; }
+
+    .btn-store svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .btn-store .store-label {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1.2;
+    }
+
+    .btn-store .store-sub {
+      font-size: 0.65rem;
+      font-weight: 400;
+      opacity: 0.7;
+    }
+
+    .btn-store .store-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    /* ── NUMBER STAT ── */
+    .stat-row {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      padding: 2.5rem 1.5rem;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--accent2);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--fg2);
+      margin-top: 0.2rem;
+    }
+
+    /* ── FEATURES ── */
+    .features {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+    }
+
+    .features-header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    .features-header h2 {
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      margin-bottom: 0.6rem;
+    }
+
+    .features-header p {
+      color: var(--fg2);
+      font-size: 1rem;
+      max-width: 460px;
+      margin: 0 auto;
+    }
+
+    /* ── FEATURE ROWS ── */
+    .feature-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      margin-bottom: 5rem;
+    }
+
+    .feature-row.flip { direction: rtl; }
+    .feature-row.flip > * { direction: ltr; }
+
+    .feature-copy .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-copy h3 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+
+    .feature-copy p {
+      color: var(--fg2);
+      font-size: 0.97rem;
+      line-height: 1.75;
+    }
+
+    .feature-img-wrap {
+      display: flex;
+      justify-content: center;
+    }
+
+    .phone-frame {
+      position: relative;
+      width: 240px;
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 24px 80px rgba(0,0,0,0.7),
+        0 0 60px rgba(59,130,246,0.12);
+    }
+
+    .phone-frame img {
+      width: 100%;
+      display: block;
+    }
+
+    .phone-placeholder {
+      width: 240px;
+      height: 480px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--fg2);
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    /* ── PRIVACY CALLOUT ── */
+    .privacy-callout {
+      background: linear-gradient(135deg, rgba(13,31,60,0.8) 0%, rgba(17,24,39,0.8) 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 760px;
+      margin: 0 auto 5rem;
+      text-align: center;
+    }
+
+    .privacy-callout .icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .privacy-callout h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 0.6rem;
+    }
+
+    .privacy-callout p {
+      color: var(--fg2);
+      font-size: 0.95rem;
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── ACCOUNT TYPES GRID ── */
+    .types-section {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 1.5rem 5rem;
+      text-align: center;
+    }
+
+    .types-section h2 {
+      font-size: clamp(1.4rem, 3.5vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      margin-bottom: 0.6rem;
+    }
+
+    .types-section .sub {
+      color: var(--fg2);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    .types-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .type-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .type-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .type-pill span {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    /* ── CTA ── */
+    .cta {
+      text-align: center;
+      padding: 4rem 1.5rem 5rem;
+      background: linear-gradient(180deg, transparent 0%, rgba(13,31,60,0.4) 100%);
+    }
+
+    .cta h2 {
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 0.75rem;
+    }
+
+    .cta p {
+      color: var(--fg2);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      color: var(--fg2);
+      font-size: 0.85rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    footer a {
+      color: var(--fg2);
+      text-decoration: none;
+    }
+
+    footer a:hover { color: var(--fg); }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .feature-row {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .feature-row.flip { direction: ltr; }
+
+      .phone-frame {
+        width: 200px;
+      }
+
+      .phone-placeholder {
+        width: 200px;
+        height: 400px;
+      }
+
+      .types-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stat-row {
+        gap: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">Worthi</a>
+    <ul class="nav-links">
+      <li><a href="support.html">Support</a></li>
+      <li><a href="privacy.html">Privacy</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="badge">Personal Finance</div>
+    <h1>Know your<br/>net worth.</h1>
+    <p>
+      One number. Every account. Investments, pension, property, savings, and debts — tracked together so you always know where you stand.
+    </p>
+    <div class="download-btns">
+      <a class="btn-store" href="#" id="appstore-hero">
+        <!-- Apple logo -->
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+        <div class="store-label">
+          <span class="store-sub">Download on the</span>
+          <span class="store-name">App Store</span>
+        </div>
+      </a>
+      <a class="btn-store" href="#" id="playstore-hero">
+        <!-- Play Store logo -->
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 20.5v-17c0-.83 1-.83 1.5-.5l14 8.5-14 8.5c-.5.33-1.5.33-1.5-.5z" opacity="0"/>
+          <path d="M5.04 3.53 13.3 12 5.04 20.47c-.13-.12-.22-.3-.22-.5V4.03c0-.2.09-.38.22-.5zM17.35 9.11 15.18 12l2.17 2.89 2.1-1.27c.6-.36.6-1.2 0-1.56l-2.1-1.95zM5.64 3.21l9.17 5.52L12.74 12l2.07 3.27-9.17 5.52L5.64 3.21z"/>
+        </svg>
+        <div class="store-label">
+          <span class="store-sub">Get it on</span>
+          <span class="store-name">Google Play</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-num">6</div>
+      <div class="stat-label">Account types supported</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">Local — no cloud, no sign-up</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">£0</div>
+      <div class="stat-label">Free to download</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features">
+
+    <div class="features-header">
+      <h2>Everything you need,<br/>nothing you don't.</h2>
+      <p>Built for people who want to take their finances seriously — without the complexity.</p>
+    </div>
+
+    <!-- Feature 1 -->
+    <div class="feature-row">
+      <div class="feature-copy">
+        <div class="eyebrow">Net Worth</div>
+        <h3>Know your<br/>number.</h3>
+        <p>
+          One clean dashboard replaces the sprawl of spreadsheets. See your total net worth at a glance — and watch it grow over time with a beautiful interactive graph.
+        </p>
+      </div>
+      <div class="feature-img-wrap">
+        <div class="phone-frame">
+          <img src="screenshots/01-know-your-net-worth.jpg" alt="Worthi home screen showing net worth and graph" loading="lazy" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 2 -->
+    <div class="feature-row flip">
+      <div class="feature-copy">
+        <div class="eyebrow">All Account Types</div>
+        <h3>Track every<br/>asset type.</h3>
+        <p>
+          ISAs, pensions, property, current accounts, credit cards, loans — all in one place. Debts subtract automatically, so your number is always honest.
+        </p>
+      </div>
+      <div class="feature-img-wrap">
+        <div class="phone-frame">
+          <img src="screenshots/02-track-every-asset-type.jpg" alt="Worthi account list showing all account types" loading="lazy" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 3 -->
+    <div class="feature-row">
+      <div class="feature-copy">
+        <div class="eyebrow">Investment Tracking</div>
+        <h3>See your<br/>investment returns.</h3>
+        <p>
+          Track deposits against current value across every investment account. Get a clear return percentage — so you actually know how your portfolio is performing.
+        </p>
+      </div>
+      <div class="feature-img-wrap">
+        <div class="phone-frame">
+          <img src="screenshots/03-see-your-investment-returns.jpg" alt="Worthi investment detail showing returns" loading="lazy" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 4 -->
+    <div class="feature-row flip">
+      <div class="feature-copy">
+        <div class="eyebrow">Quick Logging</div>
+        <h3>Log balances<br/>in seconds.</h3>
+        <p>
+          Updating your net worth takes less time than checking it used to. A focused entry sheet, smart defaults, and no unnecessary fields — built to keep you consistent.
+        </p>
+      </div>
+      <div class="feature-img-wrap">
+        <div class="phone-frame">
+          <img src="screenshots/04-log-balances-in-seconds.jpg" alt="Worthi add entry sheet" loading="lazy" />
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ACCOUNT TYPE PILLS -->
+  <section class="types-section">
+    <h2>Every account covered.</h2>
+    <p class="sub">Six account types so nothing falls through the cracks.</p>
+    <div class="types-grid">
+      <div class="type-pill">
+        <div class="type-dot" style="background:#3b82f6;"></div>
+        <span>Current Account</span>
+      </div>
+      <div class="type-pill">
+        <div class="type-dot" style="background:#10b981;"></div>
+        <span>Investment / ISA</span>
+      </div>
+      <div class="type-pill">
+        <div class="type-dot" style="background:#8b5cf6;"></div>
+        <span>Pension</span>
+      </div>
+      <div class="type-pill">
+        <div class="type-dot" style="background:#14b8a6;"></div>
+        <span>Property</span>
+      </div>
+      <div class="type-pill">
+        <div class="type-dot" style="background:#f43f5e;"></div>
+        <span>Credit Card</span>
+      </div>
+      <div class="type-pill">
+        <div class="type-dot" style="background:#f97316;"></div>
+        <span>Loan</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRIVACY CALLOUT -->
+  <div style="padding: 0 1.5rem; max-width: 960px; margin: 0 auto;">
+    <div class="privacy-callout">
+      <div class="icon">🔒</div>
+      <h3>Your data never leaves your phone.</h3>
+      <p>
+        Worthi is local-first. All balances and account history are stored only on your device — no account required, no cloud sync, no server. Delete the app and everything goes with it.
+      </p>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>Start tracking today.</h2>
+    <p>Free download. No sign-up. Takes 60 seconds to set up.</p>
+    <div class="download-btns">
+      <a class="btn-store" href="#" id="appstore-cta">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+        <div class="store-label">
+          <span class="store-sub">Download on the</span>
+          <span class="store-name">App Store</span>
+        </div>
+      </a>
+      <a class="btn-store" href="#" id="playstore-cta">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5.04 3.53 13.3 12 5.04 20.47c-.13-.12-.22-.3-.22-.5V4.03c0-.2.09-.38.22-.5zM17.35 9.11 15.18 12l2.17 2.89 2.1-1.27c.6-.36.6-1.2 0-1.56l-2.1-1.95zM5.64 3.21l9.17 5.52L12.74 12l2.07 3.27-9.17 5.52L5.64 3.21z"/>
+        </svg>
+        <div class="store-label">
+          <span class="store-sub">Get it on</span>
+          <span class="store-name">Google Play</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span>© 2025 Worthi</span>
+    <div class="footer-links">
+      <a href="support.html">Support</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+  </footer>
+
+</body>
+</html>
