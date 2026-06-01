@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, Platform, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Platform, StyleSheet, Keyboard } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-theme';
@@ -19,6 +19,7 @@ export default function DateSelector({ label = 'Date', value, onChange }: Props)
   const [showAndroidPicker, setShowAndroidPicker] = useState(false);
 
   function handlePress() {
+    Keyboard.dismiss();
     if (Platform.OS === 'ios') {
       calendarRef.current?.present(value, onChange, new Date());
     } else {

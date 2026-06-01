@@ -4,18 +4,19 @@
     "slug": "worthi",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icon-final.png",
     "scheme": "worthi",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/app-icon.icon",
+      "icon": "./assets/icon-final.icon",
       "bundleIdentifier": "com.alastair.r.mcneill.worthi2"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/android-icon.png",
-        "backgroundImage": "./assets/android-icon.png",
-        "monochromeImage": "./assets/android-icon.png"
+        "foregroundImage": "./assets/icon-android-foreground.png",
+        "backgroundImage": "./assets/icon-background.png",
+        "monochromeImage": "./assets/icon-android-foreground.png",
+        "backgroundColor": "#7EB6FF"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.alastair.r.mcneill.worthi2"

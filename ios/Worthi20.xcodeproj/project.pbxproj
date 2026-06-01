@@ -8,12 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		32D0FD84277B54FDEBFA4B09 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A708783D5A090C7F647557D /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		AF686D36916F4EC6ABBE1EC6 /* app-icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 86E735667F714CFF8522450F /* app-icon.icon */; };
+		AB82A604943F98F8C165EE1E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E5A9A3AC3E75AC38FB0C213E /* PrivacyInfo.xcprivacy */; };
+		B1780AD0E5C04D00B137E654 /* icon-final.icon in Resources */ = {isa = PBXBuildFile; fileRef = C408B8125EA34B5BA152CD6D /* icon-final.icon */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		BE25D5ADC4E2CC7908B795C1 /* libPods-Worthi20.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2BB4F0B27AFEE42133E8B2B3 /* libPods-Worthi20.a */; };
-		C7EDA713CE2655323FF4E195 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 421D75644ABE1586DD8E3F5B /* ExpoModulesProvider.swift */; };
-		E8377214FEFD8CF950D7D8F5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 71C331ABF0DFC6E5579A0FBF /* PrivacyInfo.xcprivacy */; };
+		D4B2F5BA3E4B26F2F878A61D /* libPods-Worthi20.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C25FCB36CE08CD23B71CDBBC /* libPods-Worthi20.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -21,14 +21,14 @@
 		13B07F961A680F5B00A75B9A /* Worthi20.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Worthi20.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Worthi20/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Worthi20/Info.plist; sourceTree = "<group>"; };
-		2BB4F0B27AFEE42133E8B2B3 /* libPods-Worthi20.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Worthi20.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		421D75644ABE1586DD8E3F5B /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Worthi20/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		71C331ABF0DFC6E5579A0FBF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Worthi20/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		86E735667F714CFF8522450F /* app-icon.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "app-icon.icon"; path = "Worthi20/app-icon.icon"; sourceTree = "<group>"; };
+		9A708783D5A090C7F647557D /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Worthi20/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Worthi20/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B1B78892F7D4F5FF801949EE /* Pods-Worthi20.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Worthi20.release.xcconfig"; path = "Target Support Files/Pods-Worthi20/Pods-Worthi20.release.xcconfig"; sourceTree = "<group>"; };
+		B91FB05C5179494CBA60CB3D /* Pods-Worthi20.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Worthi20.release.xcconfig"; path = "Target Support Files/Pods-Worthi20/Pods-Worthi20.release.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		EC949F2C31FD706B017B2421 /* Pods-Worthi20.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Worthi20.debug.xcconfig"; path = "Target Support Files/Pods-Worthi20/Pods-Worthi20.debug.xcconfig"; sourceTree = "<group>"; };
+		C25FCB36CE08CD23B71CDBBC /* libPods-Worthi20.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Worthi20.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C408B8125EA34B5BA152CD6D /* icon-final.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "icon-final.icon"; path = "Worthi20/icon-final.icon"; sourceTree = "<group>"; };
+		CCAB3B16DFCBBF0B7179B66A /* Pods-Worthi20.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Worthi20.debug.xcconfig"; path = "Target Support Files/Pods-Worthi20/Pods-Worthi20.debug.xcconfig"; sourceTree = "<group>"; };
+		E5A9A3AC3E75AC38FB0C213E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Worthi20/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Worthi20/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Worthi20-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Worthi20-Bridging-Header.h"; path = "Worthi20/Worthi20-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -39,7 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BE25D5ADC4E2CC7908B795C1 /* libPods-Worthi20.a in Frameworks */,
+				D4B2F5BA3E4B26F2F878A61D /* libPods-Worthi20.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,8 +55,8 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				86E735667F714CFF8522450F /* app-icon.icon */,
-				71C331ABF0DFC6E5579A0FBF /* PrivacyInfo.xcprivacy */,
+				C408B8125EA34B5BA152CD6D /* icon-final.icon */,
+				E5A9A3AC3E75AC38FB0C213E /* PrivacyInfo.xcprivacy */,
 			);
 			name = Worthi20;
 			sourceTree = "<group>";
@@ -65,9 +65,17 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				2BB4F0B27AFEE42133E8B2B3 /* libPods-Worthi20.a */,
+				C25FCB36CE08CD23B71CDBBC /* libPods-Worthi20.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		41580E1EC91B6F69EF96627C /* Worthi20 */ = {
+			isa = PBXGroup;
+			children = (
+				9A708783D5A090C7F647557D /* ExpoModulesProvider.swift */,
+			);
+			name = Worthi20;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -84,8 +92,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				A497353B21DE96EDB2B6C615 /* Pods */,
-				AB59113C177A33864833BAFA /* ExpoModulesProviders */,
+				B177C6837401D9693A88C9EA /* Pods */,
+				F805A7917656EB7AB6966D19 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -100,29 +108,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A497353B21DE96EDB2B6C615 /* Pods */ = {
+		B177C6837401D9693A88C9EA /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				EC949F2C31FD706B017B2421 /* Pods-Worthi20.debug.xcconfig */,
-				B1B78892F7D4F5FF801949EE /* Pods-Worthi20.release.xcconfig */,
+				CCAB3B16DFCBBF0B7179B66A /* Pods-Worthi20.debug.xcconfig */,
+				B91FB05C5179494CBA60CB3D /* Pods-Worthi20.release.xcconfig */,
 			);
+			name = Pods;
 			path = Pods;
-			sourceTree = "<group>";
-		};
-		AB59113C177A33864833BAFA /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				B5452195A7222779EA32B221 /* Worthi20 */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		B5452195A7222779EA32B221 /* Worthi20 */ = {
-			isa = PBXGroup;
-			children = (
-				421D75644ABE1586DD8E3F5B /* ExpoModulesProvider.swift */,
-			);
-			name = Worthi20;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -134,6 +127,14 @@
 			path = Worthi20/Supporting;
 			sourceTree = "<group>";
 		};
+		F805A7917656EB7AB6966D19 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				41580E1EC91B6F69EF96627C /* Worthi20 */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -142,13 +143,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Worthi20" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				8D7189517FDE1F9F68AF327A /* [Expo] Configure project */,
+				983C4F83CF5FE28033383C74 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				F6B73FFE08C86B60F402ECA8 /* [CP] Embed Pods Frameworks */,
+				78C4BF28D70577E21DEBB156 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -198,8 +199,8 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				AF686D36916F4EC6ABBE1EC6 /* app-icon.icon in Resources */,
-				E8377214FEFD8CF950D7D8F5 /* PrivacyInfo.xcprivacy in Resources */,
+				B1780AD0E5C04D00B137E654 /* icon-final.icon in Resources */,
+				AB82A604943F98F8C165EE1E /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,6 +246,30 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		78C4BF28D70577E21DEBB156 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Worthi20/Pods-Worthi20-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoModulesJSI/ExpoModulesJSI.framework/ExpoModulesJSI",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermesvm.framework/hermesvm",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoModulesJSI.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermesvm.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Worthi20/Pods-Worthi20-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -281,7 +306,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Worthi20/Pods-Worthi20-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8D7189517FDE1F9F68AF327A /* [Expo] Configure project */ = {
+		983C4F83CF5FE28033383C74 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -305,30 +330,6 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Worthi20/expo-configure-project.sh\"\n";
 		};
-		F6B73FFE08C86B60F402ECA8 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Worthi20/Pods-Worthi20-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoModulesJSI/ExpoModulesJSI.framework/ExpoModulesJSI",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermesvm.framework/hermesvm",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoModulesJSI.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermesvm.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Worthi20/Pods-Worthi20-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -337,7 +338,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				C7EDA713CE2655323FF4E195 /* ExpoModulesProvider.swift in Sources */,
+				32D0FD84277B54FDEBFA4B09 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,13 +347,12 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = EC949F2C31FD706B017B2421 /* Pods-Worthi20.debug.xcconfig */;
+			baseConfigurationReference = CCAB3B16DFCBBF0B7179B66A /* Pods-Worthi20.debug.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "app-icon";
+				ASSETCATALOG_COMPILER_APPICON_NAME = icon-final;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Worthi20/Worthi20.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4R5HGU4283;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -373,24 +373,23 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.alastair.r.mcneill.worthi2;
-				PRODUCT_NAME = Worthi20;
+				PRODUCT_NAME = "Worthi20";
 				SWIFT_OBJC_BRIDGING_HEADER = "Worthi20/Worthi20-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B1B78892F7D4F5FF801949EE /* Pods-Worthi20.release.xcconfig */;
+			baseConfigurationReference = B91FB05C5179494CBA60CB3D /* Pods-Worthi20.release.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "app-icon";
+				ASSETCATALOG_COMPILER_APPICON_NAME = icon-final;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Worthi20/Worthi20.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4R5HGU4283;
 				INFOPLIST_FILE = Worthi20/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -406,10 +405,10 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.alastair.r.mcneill.worthi2;
-				PRODUCT_NAME = Worthi20;
+				PRODUCT_NAME = "Worthi20";
 				SWIFT_OBJC_BRIDGING_HEADER = "Worthi20/Worthi20-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
