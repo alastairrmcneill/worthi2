@@ -15,7 +15,8 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import * as StoreReview from "expo-store-review";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -33,8 +34,18 @@ export default function HomeScreen() {
   const isLoaded = useAccountStore((s) => s.isLoaded);
 
   const addAccountRef = useRef<AddAccountSheetHandle>(null);
+  const reviewTriggered = useRef(false);
   const [range, setRange] = useState<RangeKey>("All");
   const [selectedTypes, setSelectedTypes] = useState<Set<AccountType>>(new Set());
+
+  useEffect(() => {
+    if (isLoaded && entries.length > 1 && !hasSeenReviewPrompt && !reviewTriggered.current) {
+      reviewTriggered.current = true;
+      setHasSeenReviewPrompt(true);
+      track("review_shown");
+      StoreReview.requestReview();
+    }
+  }, [isLoaded, entries.length, hasSeenReviewPrompt]);
 
   function handleRangeChange(r: RangeKey) {
     setRange(r);
@@ -366,4 +377,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
+
 });
