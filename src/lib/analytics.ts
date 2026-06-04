@@ -5,7 +5,7 @@ const TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN ?? '';
 const mixpanel = new Mixpanel(TOKEN, /* trackAutomaticEvents */ true);
 
 export async function initAnalytics(): Promise<void> {
-  await mixpanel.init();
+  await mixpanel.init(false, {}, 'https://api-eu.mixpanel.com');
   mixpanel.registerSuperProperties({ is_dev: __DEV__ });
 }
 
