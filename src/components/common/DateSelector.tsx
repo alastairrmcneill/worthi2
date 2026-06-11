@@ -45,7 +45,7 @@ export default function DateSelector({ label = 'Date', value, onChange }: Props)
         ]}
       >
         <Text style={[styles.dateText, { color: theme.fg }]}>{formatDate(value)}</Text>
-        <Ionicons name="chevron-down" size={16} color={theme.fg3} />
+        <Ionicons name="calendar-outline" size={16} color={theme.fg3} />
       </Pressable>
 
       {Platform.OS === 'android' && showAndroidPicker && (

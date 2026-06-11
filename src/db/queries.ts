@@ -136,6 +136,15 @@ export function getEntriesForAccount(accountId: string): Entry[] {
   return rows.map(rowToEntry);
 }
 
+export function getLastEntryForAccount(accountId: string): Entry | null {
+  const db = getDb();
+  const rows = db.getAllSync<EntryRow>(
+    'SELECT * FROM entries WHERE account_id = ? ORDER BY date DESC LIMIT 1',
+    [accountId]
+  );
+  return rows.length > 0 ? rowToEntry(rows[0]) : null;
+}
+
 export function getAllEntries(): Entry[] {
   const db = getDb();
   const rows = db.getAllSync<EntryRow>('SELECT * FROM entries ORDER BY account_id, date ASC');

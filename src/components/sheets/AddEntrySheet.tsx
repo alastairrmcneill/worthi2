@@ -6,7 +6,6 @@ import React, {
   useImperativeHandle,
 } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { track } from '@/lib/analytics';
 import {
@@ -24,6 +23,7 @@ import Field from '@/components/common/Field';
 import DateSelector from '@/components/common/DateSelector';
 import { todayMs } from '@/lib/interpolate';
 import { formatDate } from '@/lib/formatting';
+import { getLastEntryForAccount } from '@/db/queries';
 import type { Entry } from '@/types';
 
 export interface AddEntrySheetHandle {
@@ -32,7 +32,7 @@ export interface AddEntrySheetHandle {
   dismiss: () => void;
 }
 
-const SNAP_POINTS = ['70%'];
+const SNAP_POINTS = ['85%'];
 
 const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
   const theme = useTheme();
@@ -46,6 +46,7 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
 
   const [accountId, setAccountId] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<Entry | null>(null);
+  const [lastEntry, setLastEntry] = useState<Entry | null>(null);
   const [date, setDate] = useState(todayMs());
   const [entryValue, setEntryValue] = useState('');
   const [deposited, setDeposited] = useState('');
@@ -62,21 +63,23 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
     setMortgageBalance('');
     setEditEntry(null);
     setAccountId(null);
+    setLastEntry(null);
   }
 
   useImperativeHandle(ref, () => ({
     presentForAccount: (id: string) => {
       resetForm();
       setAccountId(id);
+      setLastEntry(getLastEntryForAccount(id));
       sheetRef.current?.present();
     },
     presentForEdit: (id: string, entry: Entry) => {
       setAccountId(id);
       setEditEntry(entry);
+      setLastEntry(null);
       setDate(entry.date);
       const acc = accounts.find((a) => a.id === id);
       if (acc) {
-        const isLiability = acc.type === 'credit_card' || acc.type === 'loan';
         setEntryValue(String(Math.abs(entry.value)));
         setDeposited(entry.deposited != null ? String(entry.deposited) : '');
         setMortgageBalance(
@@ -100,17 +103,43 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
     []
   );
 
+  function fmtPlaceholder(n: number): string {
+    return n.toFixed(2).replace(/\.?0+$/, '');
+  }
+
+  function resolveField(typed: string, fallback: number | null): number {
+    return typed !== '' ? (parseFloat(typed) || 0) : (fallback ?? 0);
+  }
+
+  const phValue =
+    !isEditing && lastEntry ? fmtPlaceholder(Math.abs(lastEntry.value)) : '0';
+  const phDeposited =
+    !isEditing && lastEntry?.deposited != null
+      ? fmtPlaceholder(lastEntry.deposited)
+      : '0';
+  const phMortgage =
+    !isEditing && lastEntry?.mortgageBalance != null
+      ? fmtPlaceholder(lastEntry.mortgageBalance)
+      : undefined;
+
   function handleSave() {
     if (!account || !accountId) return;
 
-    const rawValue = parseFloat(entryValue) || 0;
     const isLiability = account.type === 'credit_card' || account.type === 'loan';
+    const rawValue = resolveField(
+      entryValue,
+      lastEntry ? Math.abs(lastEntry.value) : null
+    );
     const storedValue = isLiability ? -rawValue : rawValue;
     const finalValue = account.type === 'property' ? rawValue : storedValue;
     const finalDeposited =
-      account.type === 'investment' ? (parseFloat(deposited) || 0) : null;
+      account.type === 'investment'
+        ? resolveField(deposited, lastEntry?.deposited ?? null)
+        : null;
     const finalMortgage =
-      account.type === 'property' ? (parseFloat(mortgageBalance) || 0) : null;
+      account.type === 'property'
+        ? resolveField(mortgageBalance, lastEntry?.mortgageBalance ?? null)
+        : null;
 
     if (isEditing && editEntry) {
       updateEntry(editEntry.id, {
@@ -172,27 +201,13 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
       enablePanDownToClose
     >
       <BottomSheetScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: 40 }]}
+        contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[styles.title, { color: theme.fg }]}>
           {isEditing ? 'Edit Entry' : 'Add Entry'}
         </Text>
-        {account && typeConfig && (
-          <View
-            style={[
-              styles.accountBadge,
-              { backgroundColor: `${typeConfig.color}18`, borderColor: `${typeConfig.color}40` },
-            ]}
-          >
-            <Ionicons name={typeConfig.glyph as any} size={15} color={typeConfig.color} />
-            <Text style={[styles.accountName, { color: typeConfig.color }]}>
-              {account.name}
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.form}>
+<View style={styles.form}>
           <DateSelector value={date} onChange={setDate} />
 
           {account?.type === 'investment' && (
@@ -202,8 +217,9 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
               onChangeText={setDeposited}
               prefix={currency.symbol}
               numeric
-              placeholder="0"
+              placeholder={phDeposited}
               hint="Cumulative amount deposited to date"
+              autoFocus
             />
           )}
 
@@ -221,8 +237,8 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
             onChangeText={setEntryValue}
             prefix={currency.symbol}
             numeric
-            placeholder="0"
-            autoFocus
+            placeholder={phValue}
+            autoFocus={account?.type !== 'investment'}
             hint={
               account?.type === 'credit_card' || account?.type === 'loan'
                 ? 'Enter the amount you owe (positive)'
@@ -237,34 +253,36 @@ const AddEntrySheet = forwardRef<AddEntrySheetHandle, object>((_, ref) => {
               onChangeText={setMortgageBalance}
               prefix={currency.symbol}
               numeric
-              placeholder="0"
+              placeholder={phMortgage}
               optional
             />
           )}
-
-          <Pressable
-            onPress={handleSave}
-            style={({ pressed }) => [
-              styles.saveBtn,
-              { backgroundColor: typeConfig?.color ?? theme.fg },
-              pressed && { opacity: 0.82 },
-            ]}
-          >
-            <Text style={styles.saveBtnText}>
-              {isEditing ? 'Update Entry' : 'Add Entry'}
-            </Text>
-          </Pressable>
-
-          {isEditing && (
-            <Pressable
-              onPress={handleDelete}
-              style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.6 }]}
-            >
-              <Text style={[styles.deleteBtnText, { color: theme.danger }]}>Delete entry</Text>
-            </Pressable>
-          )}
         </View>
       </BottomSheetScrollView>
+
+      <View style={styles.footer}>
+        <Pressable
+          onPress={handleSave}
+          style={({ pressed }) => [
+            styles.saveBtn,
+            { backgroundColor: typeConfig?.color ?? theme.fg },
+            pressed && { opacity: 0.82 },
+          ]}
+        >
+          <Text style={styles.saveBtnText}>
+            {isEditing ? 'Update Entry' : 'Add Entry'}
+          </Text>
+        </Pressable>
+
+        {isEditing && (
+          <Pressable
+            onPress={handleDelete}
+            style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.6 }]}
+          >
+            <Text style={[styles.deleteBtnText, { color: theme.danger }]}>Delete entry</Text>
+          </Pressable>
+        )}
+      </View>
     </BottomSheetModal>
   );
 });
@@ -273,7 +291,7 @@ AddEntrySheet.displayName = 'AddEntrySheet';
 export default AddEntrySheet;
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xs },
+  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xs, paddingBottom: Spacing.md },
 
   title: {
     fontSize: 20,
@@ -282,31 +300,19 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     marginBottom: Spacing.sm,
   },
-  accountBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 999,
-    borderWidth: 1,
-    marginBottom: Spacing.md,
-  },
-
-  accountName: {
-    fontSize: 13,
-    fontWeight: '600',
-    fontFamily: 'Geist_600SemiBold',
-  },
-
   form: { gap: Spacing.md },
+
+  footer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.lg,
+    gap: Spacing.xs,
+  },
 
   saveBtn: {
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
-    marginTop: 4,
   },
   saveBtnText: {
     color: '#fff',
