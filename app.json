@@ -2,14 +2,14 @@
   "expo": {
     "name": "Worthi 2.0",
     "slug": "worthi",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon-final.png",
     "scheme": "worthi",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/icon-final.icon",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "bundleIdentifier": "com.alastair.r.mcneill.worthi2"
     },
     "android": {
@@ -20,7 +20,7 @@
         "backgroundColor": "#7EB6FF"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 3,
+      "versionCode": 4,
       "package": "com.alastair.r.mcneill.worthi2"
     },
     "web": {
